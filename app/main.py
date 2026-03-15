@@ -8,11 +8,13 @@ from .models import Base, Post
 from . import schemas
 import shutil
 import uuid
+from datetime import datetime
 
 app = FastAPI()
 templates = Jinja2Templates(directory="app/templates")
 app.mount("/uploads", StaticFiles(directory="app/uploads"), name="uploads")
-Base.metadata.create_all(bind=engine)
+
+# Base.metadata.create_all(bind=engine)  # Теперь это делает Alembic
 
 @app.get("/")
 def home(request: Request, page: int = 1, db: Session = Depends(get_db)):
@@ -35,26 +37,40 @@ def edit_post_page(post_id: int, request: Request, db: Session = Depends(get_db)
     )
 
 @app.post("/create-post")
-def create_post_form(
+async def create_post(
+    author: str = Form(...),
     title: str = Form(...),
     description: str = Form(...),
     image: UploadFile = File(None),
     db: Session = Depends(get_db)
 ):
-    image_name = None
-    if image and image.filename:
-        image_name = f"{uuid.uuid4()}_{image.filename}"
-        file_path = f"app/uploads/{image_name}"
-        with open(file_path, "wb") as buffer:
+
+    image_filename = None
+
+    if image:
+        image_filename = image.filename
+        path = f"uploads/{image_filename}"
+
+        with open(path, "wb") as buffer:
             shutil.copyfileobj(image.file, buffer)
-    db_post = Post(title=title, description=description, image_path=image_name)
-    db.add(db_post)
+
+    post = Post(
+        author=author,
+        title=title,
+        description=description,
+        image_path=image_filename,
+        created_at=datetime.utcnow()
+    )
+
+    db.add(post)
     db.commit()
+
     return RedirectResponse("/", status_code=303)
 
 @app.post("/update/{post_id}")
 def update_post_form(
     post_id: int,
+    author: str = Form(...),
     title: str = Form(...),
     description: str = Form(...),
     image: UploadFile = File(None),
@@ -62,6 +78,7 @@ def update_post_form(
 ):
     post = db.query(Post).filter(Post.id == post_id).first()
     if post:
+        post.author = author
         post.title = title
         post.description = description
         if image and image.filename:
