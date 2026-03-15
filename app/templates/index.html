@@ -4,49 +4,161 @@
 <meta charset="UTF-8">
 <title>HobbyHaven</title>
 <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.ckeditor.com/ckeditor5/40.0.0/classic/ckeditor.js"></script>
+<style>
+    .ck-editor__editable { min-height: 200px; color: black; }
+</style>
 </head>
+
 <body class="bg-gray-100">
+
 <div class="max-w-4xl mx-auto p-6">
+
 <h1 class="text-4xl font-bold mb-6">HobbyHaven</h1>
 
 <div class="bg-white p-6 rounded-xl shadow mb-10">
 <h2 class="text-2xl font-semibold mb-4">Add Hobby</h2>
-<form action="/create-post" method="post" enctype="multipart/form-data" class="space-y-4">
-<input class="w-full border rounded p-2" type="text" name="title" placeholder="Hobby title" required>
-<textarea class="w-full border rounded p-2" name="description" placeholder="Description"></textarea>
-<input class="w-full" type="file" name="image">
-<button class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600" type="submit">Post</button>
+
+<form action="/create-post" method="post" enctype="multipart/form-data">
+
+<div class="mb-4">
+    <label class="block text-gray-700 font-bold mb-2">Author</label>
+    <input
+    class="w-full border rounded p-2"
+    type="text"
+    name="author"
+    placeholder="Enter author name"
+    required
+    >
+</div>
+
+<div class="mb-4">
+    <label class="block text-gray-700 font-bold mb-2">Title</label>
+    <input
+    class="w-full border rounded p-2"
+    type="text"
+    name="title"
+    placeholder="Enter hobby title"
+    required
+    >
+</div>
+
+<div class="mb-4">
+    <label class="block text-gray-700 font-bold mb-2">Description (HTML Box)</label>
+    <textarea
+    class="w-full border rounded p-2"
+    name="description"
+    id="editor"
+    ></textarea>
+</div>
+
+<div class="mb-4">
+    <label class="block text-gray-700 font-bold mb-2">Image (Optional)</label>
+    <input type="file" name="image" class="w-full">
+</div>
+
+<button
+class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+type="submit"
+>
+Create Post
+</button>
+
 </form>
 </div>
 
+<script>
+    ClassicEditor
+        .create(document.querySelector('#editor'))
+        .catch(error => {
+            console.error(error);
+        });
+</script>
+
+
 <h2 class="text-2xl font-semibold mb-4">Posts</h2>
+
 <div class="space-y-6">
+
 {% for post in posts %}
+
 <div class="bg-white rounded-xl shadow overflow-hidden border border-gray-200 flex {% if loop.index is even %}flex-row-reverse{% else %}flex-row{% endif %}">
 
-  {% if post.image_path %}
-  <img src="/uploads/{{ post.image_path }}" class="w-1/2 object-cover">
-  {% else %}
-  <div class="w-1/2 bg-gray-200"></div>
-  {% endif %}
+{% if post.image_path %}
+<img
+src="/uploads/{{ post.image_path }}"
+class="w-1/2 object-cover transition duration-300 transform hover:scale-105 cursor-pointer"
+onclick="openImage(this.src)"
+>
+{% else %}
+<div class="w-1/2 bg-gray-200"></div>
+{% endif %}
 
-  <div class="w-1/2 p-6 flex flex-col justify-between">
-    <div>
-      <h3 class="text-xl font-semibold">{{ post.title }}</h3>
-      <p class="text-gray-600 mt-2">{{ post.description }}</p>
-    </div>
-    <div class="flex gap-2 justify-end mt-4">
-      <a href="/edit/{{ post.id }}" class="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600">Edit</a>
-      <form action="/delete-post/{{ post.id }}" method="post">
-        <button class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">Delete</button>
-      </form>
-    </div>
-  </div>
+<div class="w-1/2 p-6 flex flex-col justify-between">
+
+<div>
+<h3 class="text-xl font-semibold">{{ post.title }}</h3>
+
+<p class="text-sm text-gray-400 mt-1">
+By {{ post.author }} • {{ post.created_at.strftime("%d %b %Y %H:%M") }}
+</p>
+
+<p class="text-gray-600 mt-2">
+{{ post.description | safe }}
+</p>
+</div>
+
+<div class="flex gap-2 justify-end mt-4">
+
+<a
+href="/edit/{{ post.id }}"
+class="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600"
+>
+Edit
+</a>
+
+<form action="/delete-post/{{ post.id }}" method="post">
+<button
+class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+>
+Delete
+</button>
+</form>
 
 </div>
+
+</div>
+
+</div>
+
 {% endfor %}
+
 </div>
 
 </div>
+
+
+<div id="imageModal" class="fixed inset-0 bg-black bg-opacity-80 hidden items-center justify-center">
+<img id="modalImg" class="max-h-[90%] max-w-[90%]">
+</div>
+
+<script>
+
+function openImage(src) {
+const modal = document.getElementById("imageModal")
+const img = document.getElementById("modalImg")
+
+img.src = src
+modal.classList.remove("hidden")
+modal.classList.add("flex")
+}
+
+document.getElementById("imageModal").onclick = function() {
+this.classList.add("hidden")
+this.classList.remove("flex")
+}
+
+</script>
+
 </body>
 </html>
