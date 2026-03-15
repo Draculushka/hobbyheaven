@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Редактирование истории — HobbyHeaven</title>
+    <title>Редактирование — HobbyHeaven</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.ckeditor.com/ckeditor5/40.0.0/classic/ckeditor.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Lora:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
@@ -23,7 +23,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                         <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
                     </svg>
-                    Вернуться назад
+                    Вернуться в Рай
                 </a>
                 <h1 class="text-4xl font-bold text-[#2D3436]">Редактирование</h1>
             </div>
@@ -32,28 +32,29 @@
         <!-- Edit Form -->
         <section class="mb-20">
             <div class="bg-white p-8 md:p-10 rounded-[32px] border border-[#F1F2F6] shadow-sm">
-                <form action="/update/{{ post.id }}" method="post" enctype="multipart/form-data" class="space-y-8">
+                <form action="/update/{{ hobby.id }}" method="post" enctype="multipart/form-data" class="space-y-8">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div class="space-y-2 relative">
                             <label class="text-sm font-semibold uppercase tracking-wider text-[#95A5A6] ml-1">Название хобби</label>
                             <input id="hobby-input" class="w-full bg-[#F8F9FA] border-none rounded-2xl p-4 focus:ring-2 focus:ring-[#E67E22] outline-none transition-all" 
-                                   type="text" name="title" value="{{ post.title }}" autocomplete="off" required>
-                            
-                            <!-- Custom Autocomplete Suggestions -->
-                            <div id="autocomplete-results" class="absolute z-20 left-0 right-0 bg-white mt-2 rounded-2xl shadow-xl border border-[#F1F2F6] hidden overflow-hidden">
-                                <!-- JS will inject options here -->
-                            </div>
+                                   type="text" name="title" value="{{ hobby.title }}" autocomplete="off" required>
                         </div>
                         <div class="space-y-2">
                             <label class="text-sm font-semibold uppercase tracking-wider text-[#95A5A6] ml-1">Автор</label>
                             <input class="w-full bg-[#F8F9FA] border-none rounded-2xl p-4 focus:ring-2 focus:ring-[#E67E22] outline-none transition-all" 
-                                   type="text" name="author" value="{{ post.author }}" required>
+                                   type="text" name="author" value="{{ hobby.author }}" required>
                         </div>
                     </div>
 
                     <div class="space-y-2">
+                        <label class="text-sm font-semibold uppercase tracking-wider text-[#95A5A6] ml-1">Теги (через запятую)</label>
+                        <input class="w-full bg-[#F8F9FA] border-none rounded-2xl p-4 focus:ring-2 focus:ring-[#E67E22] outline-none transition-all" 
+                               type="text" name="tags_input" value="{{ tags_str }}">
+                    </div>
+
+                    <div class="space-y-2">
                         <label class="text-sm font-semibold uppercase tracking-wider text-[#95A5A6] ml-1">История, прогресс или совет</label>
-                        <textarea name="description" id="editor">{{ post.description }}</textarea>
+                        <textarea name="description" id="editor">{{ hobby.description }}</textarea>
                     </div>
 
                     <div class="flex flex-col md:flex-row items-center justify-between gap-6 pt-4">
@@ -72,13 +73,8 @@
                             </label>
 
                             <!-- Thumbnail Preview -->
-                            <div id="editPreviewContainer" class="{% if not post.image_path %}hidden{% endif %} relative group">
-                                <img id="editPreview" src="{% if post.image_path %}/uploads/{{ post.image_path }}{% endif %}" class="w-16 h-16 object-cover rounded-xl border-2 border-[#E67E22] shadow-sm">
-                                <button type="button" onclick="clearImage('editPreview', 'editPreviewContainer')" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                </button>
+                            <div id="editPreviewContainer" class="{% if not hobby.image_path %}hidden{% endif %} relative group">
+                                <img id="editPreview" src="{% if hobby.image_path %}/uploads/{{ hobby.image_path }}{% endif %}" class="w-16 h-16 object-cover rounded-xl border-2 border-[#E67E22] shadow-sm">
                             </div>
                         </div>
                         
@@ -116,61 +112,6 @@
                 reader.readAsDataURL(input.files[0]);
             }
         }
-
-        function clearImage(previewId, containerId) {
-            const preview = document.getElementById(previewId);
-            const container = document.getElementById(containerId);
-            const input = container.previousElementSibling.querySelector('input[type="file"]');
-            
-            input.value = "";
-            preview.src = "";
-            container.classList.add('hidden');
-        }
-
-        // --- Custom Autocomplete Logic ---
-        const hobbyInput = document.getElementById('hobby-input');
-        const resultsDiv = document.getElementById('autocomplete-results');
-        const hobbiesList = [
-            "Рисование", "Кулинария", "Фотография", "Программирование", 
-            "Вязание", "Путешествия", "Йога", "Спорт", "Шахматы", 
-            "Шашки", "Музыка", "Шитьё", "Танцы", "Моделирование"
-        ];
-
-        hobbyInput.addEventListener('input', function() {
-            const value = this.value.toLowerCase();
-            resultsDiv.innerHTML = '';
-            
-            if (!value) {
-                resultsDiv.classList.add('hidden');
-                return;
-            }
-
-            const filtered = hobbiesList.filter(hobby => 
-                hobby.toLowerCase().startsWith(value)
-            );
-
-            if (filtered.length > 0) {
-                filtered.forEach(hobby => {
-                    const item = document.createElement('div');
-                    item.className = 'p-4 hover:bg-[#FDF2E9] hover:text-[#E67E22] cursor-pointer transition-colors border-b border-[#F8F9FA] last:border-0 font-medium';
-                    item.textContent = hobby;
-                    item.onclick = function() {
-                        hobbyInput.value = hobby;
-                        resultsDiv.classList.add('hidden');
-                    };
-                    resultsDiv.appendChild(item);
-                });
-                resultsDiv.classList.remove('hidden');
-            } else {
-                resultsDiv.classList.add('hidden');
-            }
-        });
-
-        document.addEventListener('click', function(e) {
-            if (!hobbyInput.contains(e.target) && !resultsDiv.contains(e.target)) {
-                resultsDiv.classList.add('hidden');
-            }
-        });
     </script>
 </body>
 </html>

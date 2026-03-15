@@ -20,18 +20,22 @@
     <div class="max-w-4xl mx-auto p-6 md:p-12">
         <!-- Header -->
         <header class="mb-16 text-center">
-            <h1 class="text-5xl md:text-6xl font-bold text-[#2D3436] mb-4">HobbyHeaven</h1>
-            <p class="text-lg italic text-[#7F8C8D] font-serif">Место, где увлечения обретают смысл, а опыт становится мудростью.</p>
+            <h1 class="text-5xl md:text-6xl font-bold text-[#2D3436] mb-4 tracking-tight">HobbyHeaven</h1>
+            <p class="text-xl text-[#7F8C8D] font-serif flex flex-col md:flex-row items-center justify-center gap-2 md:gap-4 italic">
+                <span>то, что любим</span>
+                <span class="hidden md:block text-[#E67E22] opacity-40 font-normal not-italic">•</span>
+                <span>там, где делимся</span>
+            </p>
         </header>
 
-        <!-- Create Post Section -->
+        <!-- Create Hobby Section -->
         <section class="mb-20">
             <div class="bg-white p-8 md:p-10 rounded-[32px] border border-[#F1F2F6] shadow-sm">
                 <h2 class="text-3xl font-bold mb-8 flex items-center gap-3">
                     <span class="w-1.5 h-8 bg-[#E67E22] rounded-full"></span>
-                    Поделиться моментом
+                    Поделиться увлечением
                 </h2>
-                <form action="/create-post" method="post" enctype="multipart/form-data" class="space-y-8">
+                <form action="/create-hobby" method="post" enctype="multipart/form-data" class="space-y-8">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div class="space-y-2 relative">
                             <label class="text-sm font-semibold uppercase tracking-wider text-[#95A5A6] ml-1">Название хобби</label>
@@ -48,6 +52,12 @@
                             <input class="w-full bg-[#F8F9FA] border-none rounded-2xl p-4 focus:ring-2 focus:ring-[#E67E22] outline-none transition-all placeholder:text-[#BDC3C7]" 
                                    type="text" name="author" placeholder="Ваше имя или никнейм" required>
                         </div>
+                    </div>
+
+                    <div class="space-y-2">
+                        <label class="text-sm font-semibold uppercase tracking-wider text-[#95A5A6] ml-1">Теги (через запятую)</label>
+                        <input class="w-full bg-[#F8F9FA] border-none rounded-2xl p-4 focus:ring-2 focus:ring-[#E67E22] outline-none transition-all placeholder:text-[#BDC3C7]" 
+                               type="text" name="tags_input" placeholder="Спорт, Музыка, Настольные игры...">
                     </div>
 
                     <div class="space-y-2">
@@ -79,24 +89,45 @@
                         </div>
                         
                         <button class="w-full md:w-auto bg-[#E67E22] text-white font-bold px-10 py-4 rounded-2xl hover:bg-[#D35400] shadow-lg shadow-orange-200 transition-all active:scale-95" type="submit">
-                            Опубликовать историю
+                            Опубликовать в Раю
                         </button>
                     </div>
                 </form>
             </div>
         </section>
 
-        <!-- Feed -->
+        <!-- Search & Feed -->
         <section>
-            <h2 class="text-4xl font-bold mb-10">Истории сообщества</h2>
+            <div class="flex flex-col md:flex-row items-center justify-between mb-10 gap-6">
+                <h2 class="text-4xl font-bold">Истории сообщества</h2>
+                <form action="/" method="get" class="w-full md:w-auto relative group">
+                    <input type="text" name="search" value="{{ search }}" placeholder="Найти хобби..." 
+                           class="w-full md:w-80 bg-white border border-[#F1F2F6] rounded-2xl px-6 py-3 focus:ring-2 focus:ring-[#E67E22] outline-none transition-all shadow-sm pr-12">
+                    <button type="submit" class="absolute right-4 top-1/2 -translate-y-1/2 text-[#BDC3C7] group-hover:text-[#E67E22] transition-colors">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                    </button>
+                    {% if search %}
+                    <a href="/" class="absolute -bottom-6 right-0 text-xs text-[#E67E22] hover:underline">Сбросить поиск</a>
+                    {% endif %}
+                </form>
+            </div>
+
+            {% if not hobbies %}
+            <div class="text-center py-20 bg-white rounded-[40px] border border-[#F1F2F6] shadow-sm">
+                <p class="text-[#7F8C8D] font-serif italic text-xl">Ничего не найдено... Возможно, стоит начать новую историю?</p>
+            </div>
+            {% endif %}
+
             <div class="space-y-12">
-                {% for post in posts %}
+                {% for hobby in hobbies %}
                 <article class="post-card bg-white rounded-[40px] border border-[#F1F2F6] overflow-hidden">
                     <div class="flex flex-col md:flex-row">
                         <!-- Media Section -->
                         <div class="md:w-5/12 relative h-72 md:h-auto overflow-hidden group">
-                            {% if post.image_path %}
-                            <img src="/uploads/{{ post.image_path }}" 
+                            {% if hobby.image_path %}
+                            <img src="/uploads/{{ hobby.image_path }}" 
                                  class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 cursor-pointer"
                                  onclick="openImage(this.src)">
                             {% else %}
@@ -110,20 +141,27 @@
                         <div class="p-8 md:p-12 md:w-7/12 flex flex-col justify-between bg-white">
                             <div>
                                 <div class="flex justify-between items-center mb-6">
-                                    <span class="px-4 py-1.5 bg-[#FDF2E9] text-[#E67E22] rounded-full text-xs font-bold uppercase tracking-widest">
-                                        {{ post.title }}
-                                    </span>
-                                    <time class="text-[#BDC3C7] text-sm font-medium">{{ post.created_at.strftime('%d.%m.%Y') }}</time>
+                                    <div class="flex flex-wrap gap-2">
+                                        <span class="px-4 py-1.5 bg-[#FDF2E9] text-[#E67E22] rounded-full text-xs font-bold uppercase tracking-widest">
+                                            {{ hobby.title }}
+                                        </span>
+                                        {% for tag in hobby.tags %}
+                                        <span class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-[10px] font-bold uppercase tracking-tighter">
+                                            #{{ tag.name }}
+                                        </span>
+                                        {% endfor %}
+                                    </div>
+                                    <time class="text-[#BDC3C7] text-sm font-medium">{{ hobby.created_at.strftime('%d.%m.%Y') }}</time>
                                 </div>
-                                <h3 class="text-3xl font-bold leading-tight mb-6 text-[#2D3436]">{{ post.author or 'Странник' }}</h3>
+                                <h3 class="text-3xl font-bold leading-tight mb-6 text-[#2D3436]">{{ hobby.author or 'Странник' }}</h3>
                                 <div class="text-[#7F8C8D] leading-relaxed font-serif text-lg italic line-clamp-4">
-                                    {{ post.description | safe }}
+                                    {{ hobby.description | safe }}
                                 </div>
                             </div>
 
                             <div class="mt-10 flex items-center justify-between border-t border-[#F8F9FA] pt-6">
-                                <a href="/edit/{{ post.id }}" class="text-[#E67E22] font-bold hover:underline">Изменить</a>
-                                <form action="/delete-post/{{ post.id }}" method="post" onsubmit="return confirm('Вы уверены, что хотите удалить эту историю?');">
+                                <a href="/edit/{{ hobby.id }}" class="text-[#E67E22] font-bold hover:underline">Изменить</a>
+                                <form action="/delete-hobby/{{ hobby.id }}" method="post" onsubmit="return confirm('Вы уверены, что хотите удалить эту историю?');">
                                     <button class="text-[#BDC3C7] hover:text-[#C0392B] transition-colors font-medium">Удалить</button>
                                 </form>
                             </div>
