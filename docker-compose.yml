@@ -1,19 +1,51 @@
-version: "3"
+version: "3.8"
 
 services:
-
-  web:
-    build: .
-    ports:
-      - "8000:8000"
-    depends_on:
-      - db
-    environment:
-      - DATABASE_URL=postgresql://draculushka:242684865@db/hobbyheaven
-
+  # База данных PostgreSQL
   db:
     image: postgres:16
+    container_name: hobby_db
     environment:
       - POSTGRES_USER=draculushka
-      - POSTGRES_PASSWORD=242684865
+      - POSTGRES_PASSWORD=secure_password
       - POSTGRES_DB=hobbyheaven
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - hobby_network
+
+  # Ваше FastAPI приложение
+  web:
+    build: .
+    container_name: hobby_web
+    environment:
+      - DATABASE_URL=postgresql://draculushka:secure_password@db/hobbyheaven
+    depends_on:
+      - db
+    volumes:
+      - ./app/uploads:/app/app/uploads
+    networks:
+      - hobby_network
+    # Мы больше не пробрасываем 8000 порт наружу!
+    # Он будет доступен только ВНУТРИ сети для Nginx.
+
+  # Веб-сервер Nginx (Reverse Proxy)
+  nginx:
+    image: nginx:latest
+    container_name: hobby_nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./app/uploads:/app/uploads:ro
+    depends_on:
+      - web
+    networks:
+      - hobby_network
+
+networks:
+  hobby_network:
+    driver: bridge
+
+volumes:
+  postgres_data:
