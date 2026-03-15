@@ -34,15 +34,20 @@
             <div class="bg-white p-8 md:p-10 rounded-[32px] border border-[#F1F2F6] shadow-sm">
                 <form action="/update/{{ post.id }}" method="post" enctype="multipart/form-data" class="space-y-8">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div class="space-y-2 relative">
+                            <label class="text-sm font-semibold uppercase tracking-wider text-[#95A5A6] ml-1">Название хобби</label>
+                            <input id="hobby-input" class="w-full bg-[#F8F9FA] border-none rounded-2xl p-4 focus:ring-2 focus:ring-[#E67E22] outline-none transition-all" 
+                                   type="text" name="title" value="{{ post.title }}" autocomplete="off" required>
+                            
+                            <!-- Custom Autocomplete Suggestions -->
+                            <div id="autocomplete-results" class="absolute z-20 left-0 right-0 bg-white mt-2 rounded-2xl shadow-xl border border-[#F1F2F6] hidden overflow-hidden">
+                                <!-- JS will inject options here -->
+                            </div>
+                        </div>
                         <div class="space-y-2">
                             <label class="text-sm font-semibold uppercase tracking-wider text-[#95A5A6] ml-1">Автор</label>
                             <input class="w-full bg-[#F8F9FA] border-none rounded-2xl p-4 focus:ring-2 focus:ring-[#E67E22] outline-none transition-all" 
                                    type="text" name="author" value="{{ post.author }}" required>
-                        </div>
-                        <div class="space-y-2">
-                            <label class="text-sm font-semibold uppercase tracking-wider text-[#95A5A6] ml-1">Название хобби</label>
-                            <input class="w-full bg-[#F8F9FA] border-none rounded-2xl p-4 focus:ring-2 focus:ring-[#E67E22] outline-none transition-all" 
-                                   type="text" name="title" value="{{ post.title }}" required>
                         </div>
                     </div>
 
@@ -121,6 +126,51 @@
             preview.src = "";
             container.classList.add('hidden');
         }
+
+        // --- Custom Autocomplete Logic ---
+        const hobbyInput = document.getElementById('hobby-input');
+        const resultsDiv = document.getElementById('autocomplete-results');
+        const hobbiesList = [
+            "Рисование", "Кулинария", "Фотография", "Программирование", 
+            "Вязание", "Путешествия", "Йога", "Спорт", "Шахматы", 
+            "Шашки", "Музыка", "Шитьё", "Танцы", "Моделирование"
+        ];
+
+        hobbyInput.addEventListener('input', function() {
+            const value = this.value.toLowerCase();
+            resultsDiv.innerHTML = '';
+            
+            if (!value) {
+                resultsDiv.classList.add('hidden');
+                return;
+            }
+
+            const filtered = hobbiesList.filter(hobby => 
+                hobby.toLowerCase().startsWith(value)
+            );
+
+            if (filtered.length > 0) {
+                filtered.forEach(hobby => {
+                    const item = document.createElement('div');
+                    item.className = 'p-4 hover:bg-[#FDF2E9] hover:text-[#E67E22] cursor-pointer transition-colors border-b border-[#F8F9FA] last:border-0 font-medium';
+                    item.textContent = hobby;
+                    item.onclick = function() {
+                        hobbyInput.value = hobby;
+                        resultsDiv.classList.add('hidden');
+                    };
+                    resultsDiv.appendChild(item);
+                });
+                resultsDiv.classList.remove('hidden');
+            } else {
+                resultsDiv.classList.add('hidden');
+            }
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!hobbyInput.contains(e.target) && !resultsDiv.contains(e.target)) {
+                resultsDiv.classList.add('hidden');
+            }
+        });
     </script>
 </body>
 </html>
