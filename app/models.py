@@ -10,5 +10,6 @@ class Post(Base):
     id = Column(Integer, primary_key=True, index=True)
     title = Column(String, nullable=False)
     description = Column(Text)
+    author = Column(String)
     image_path = Column(String)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
