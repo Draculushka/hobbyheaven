@@ -6,3 +6,6 @@ __pycache__/
 # Project Data
 data/postgres/
 data/uploads/
+*.db
+.vscode/
+.idea/

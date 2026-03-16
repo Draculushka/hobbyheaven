@@ -19,6 +19,7 @@ class User(Base):
     username = Column(String, unique=True, index=True, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
+    is_admin = Column(Integer, default=0) # Using Integer for boolean-like behavior if SQLite, or use Boolean
     
     # Связь с хобби
     hobbies = relationship("Hobby", back_populates="author_user")
