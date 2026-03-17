@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Form, Request, status, UploadFile, File,
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
-from sqlalchemy import or_
+from sqlalchemy import or_, func
 from typing import Optional
 
 from ...database import get_db
@@ -38,6 +38,15 @@ async def home(
         "index.html",
         {"request": request, "hobbies": hobbies, "page": page, "search": search, "user": current_user}
     )
+
+@router.get("/random")
+def get_random_hobby(db: Session = Depends(get_db)):
+    # Выбираем случайное хобби
+    hobby = db.query(Hobby).order_by(func.random()).first()
+    if not hobby:
+        return RedirectResponse("/", status_code=status.HTTP_303_SEE_OTHER)
+    # Редирект на главную с поиском по этому хобби
+    return RedirectResponse(f"/?search={hobby.title}", status_code=status.HTTP_303_SEE_OTHER)
 
 @router.post("/create-hobby")
 async def create_hobby(

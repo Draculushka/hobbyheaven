@@ -6,354 +6,159 @@
     <title>HobbyHeaven — Территория Творчества</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.ckeditor.com/ckeditor5/40.0.0/classic/ckeditor.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Lora:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #FDFCF0; }
         h1, h2, h3, .font-serif { font-family: 'Lora', serif; }
-        .ck-editor__editable { min-height: 250px; color: #2D3436; border-radius: 0 0 12px 12px !important; background-color: #fff !important; }
-        .ck-toolbar { border-radius: 12px 12px 0 0 !important; border: 1px solid #DCDDE1 !important; background-color: #F8F9FA !important; }
-        .post-card { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-        .post-card:hover { transform: translateY(-4px); box-shadow: 0 12px 24px -10px rgba(230, 126, 34, 0.15); }
+        .ck-editor__editable { min-height: 200px; color: #2D3436; border-radius: 0 0 16px 16px !important; background-color: #fff !important; }
+        .ck-toolbar { border-radius: 16px 16px 0 0 !important; border: 1px solid #F1F2F6 !important; background-color: #F8F9FA !important; }
+        .post-card { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+        .post-card:hover { transform: translateY(-6px); box-shadow: 0 20px 40px -15px rgba(230, 126, 34, 0.12); }
+        
+        #tags-panel { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
+        #tags-panel.open { max-height: 200px; }
+
+        /* --- 3D NAV CUBE --- */
+        .dice-scene { width: 16px; height: 16px; perspective: 80px; display: inline-block; }
+        .cube { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transform: rotateX(-20deg) rotateY(30deg); transition: transform 1.2s cubic-bezier(0.19, 1, 0.22, 1); }
+        .surprise-btn:hover .cube { transform: rotateX(720deg) rotateY(900deg); }
+        .cube__face { position: absolute; width: 16px; height: 16px; border: 0.2px solid #BDC3C7; background: rgba(255, 255, 255, 0.95); display: grid; grid-template: repeat(3, 1fr) / repeat(3, 1fr); padding: 1.5px; box-sizing: border-box; transition: border-color 0.4s ease; }
+        .pip { width: 2.2px; height: 2.2px; background-color: #BDC3C7; border-radius: 50%; align-self: center; justify-self: center; transition: background-color 0.4s ease; }
+        .surprise-btn:hover .cube__face { border-color: #E67E22; }
+        .surprise-btn:hover .pip { background-color: #E67E22; }
+        .cube__face--1 { transform: rotateY(0deg) translateZ(8px); }
+        .cube__face--6 { transform: rotateY(180deg) translateZ(8px); }
+        .cube__face--3 { transform: rotateY(90deg) translateZ(8px); }
+        .cube__face--4 { transform: rotateY(-90deg) translateZ(8px); }
+        .cube__face--2 { transform: rotateX(90deg) translateZ(8px); }
+        .cube__face--5 { transform: rotateX(-90deg) translateZ(8px); }
+        .cube__face--1 .pip { grid-area: 2/2; }
+        .cube__face--2 .pip:nth-child(1) { grid-area: 1/1; } .cube__face--2 .pip:nth-child(2) { grid-area: 3/3; }
+        .cube__face--3 .pip:nth-child(1) { grid-area: 1/1; } .cube__face--3 .pip:nth-child(2) { grid-area: 2/2; } .cube__face--3 .pip:nth-child(3) { grid-area: 3/3; }
+        .cube__face--4 .pip:nth-child(1) { grid-area: 1/1; } .cube__face--4 .pip:nth-child(2) { grid-area: 1/3; } .cube__face--4 .pip:nth-child(3) { grid-area: 3/1; } .cube__face--4 .pip:nth-child(4) { grid-area: 3/3; }
+        .cube__face--5 .pip:nth-child(1) { grid-area: 1/1; } .cube__face--5 .pip:nth-child(2) { grid-area: 1/3; } .cube__face--5 .pip:nth-child(3) { grid-area: 2/2; } .cube__face--5 .pip:nth-child(4) { grid-area: 3/1; } .cube__face--5 .pip:nth-child(5) { grid-area: 3/3; }
+        .cube__face--6 .pip:nth-child(1) { grid-area: 1/1; } .cube__face--6 .pip:nth-child(2) { grid-area: 1/3; } .cube__face--6 .pip:nth-child(3) { grid-area: 2/1; } .cube__face--6 .pip:nth-child(4) { grid-area: 2/3; } .cube__face--6 .pip:nth-child(5) { grid-area: 3/1; } .cube__face--6 .pip:nth-child(6) { grid-area: 3/3; }
     </style>
 </head>
 <body class="text-[#2D3436] antialiased">
     <!-- Navigation Bar -->
-    <nav class="bg-white/80 backdrop-blur-md sticky top-0 z-40 border-b border-[#F1F2F6]">
-        <div class="max-w-4xl mx-auto px-6 py-4 flex justify-between items-center">
-            <a href="/" class="text-2xl font-bold text-[#E67E22] tracking-tighter">HobbyHeaven</a>
-            <div class="flex items-center gap-6">
-                {% if user %}
-                <span class="text-sm font-medium text-[#7F8C8D]">Привет, <span class="text-[#2D3436] font-bold">{{ user.username }}</span></span>
-                <a href="/logout" class="text-sm font-bold text-[#BDC3C7] hover:text-[#C0392B] transition-colors">Выйти</a>
-                {% else %}
-                <a href="/login" class="text-sm font-bold text-[#7F8C8D] hover:text-[#E67E22] transition-colors">Войти</a>
-                <a href="/register" class="bg-[#E67E22] text-white text-sm font-bold px-5 py-2.5 rounded-xl hover:bg-[#D35400] transition-all">Регистрация</a>
-                {% endif %}
+    <nav class="bg-white/90 backdrop-blur-xl sticky top-0 z-50 border-b border-[#F1F2F6]">
+        <div class="max-w-6xl mx-auto px-4 h-16 flex items-center gap-4">
+            
+            <!-- Hybrid Schematic Logo (Detailed structure + Original Colors) -->
+            <a href="/" class="flex-shrink-0 group">
+                <div class="w-10 h-10 bg-[#E67E22] rounded-xl flex items-center justify-center shadow-lg shadow-orange-100 hover:scale-110 transition-transform">
+                    <svg width="28" height="28" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                        <g transform="rotate(-45, 100, 100)">
+                            <!-- handle (schematic) -->
+                            <rect x="93" y="56" width="14" height="80" rx="4" fill="white"/>
+                            <!-- ferrule (schematic) -->
+                            <rect x="90" y="42" width="20" height="16" rx="3" fill="white" opacity="0.6"/>
+                            <!-- bristles (3 main paths for movement) -->
+                            <path d="M92 42 Q85 25 92 8"  stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                            <path d="M100 42 Q100 24 100 6" stroke="white" stroke-width="3" fill="none" stroke-linecap="round"/>
+                            <path d="M108 42 Q115 25 108 8" stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                            <!-- paint tip (schematic glow) -->
+                            <circle cx="100" cy="8" r="15" fill="white" opacity="0.25"/>
+                            <circle cx="100" cy="8" r="8" fill="white" opacity="0.4"/>
+                        </g>
+                    </svg>
+                </div>
+            </a>
+
+            <!-- Search & Interactive Tools -->
+            <div class="flex-grow max-w-2xl flex items-center gap-2">
+                <form action="/" method="get" class="flex-grow relative group">
+                    <input type="text" name="search" value="{{ search }}" placeholder="Найти вдохновение..." class="w-full bg-[#F8F9FA] border-none rounded-xl px-10 py-2 text-sm focus:ring-2 focus:ring-[#E67E22] outline-none transition-all">
+                    <div class="absolute left-3 top-1/2 -translate-y-1/2 text-[#BDC3C7]"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg></div>
+                </form>
+                <button onclick="document.getElementById('tags-panel').classList.toggle('open')" class="p-2 text-[#7F8C8D] hover:text-[#E67E22] hover:bg-orange-50 rounded-lg transition-all" title="Категории"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 11h.01M7 15h.01M13 7h.01M13 11h.01M13 15h.01M17 7h.01M17 11h.01M17 15h.01" /></svg></button>
+                <a href="/random" class="surprise-btn p-2 text-[#7F8C8D] hover:bg-orange-50 rounded-lg transition-all flex items-center justify-center" title="МНЕ ПОВЕЗЁТ">
+                    <div class="dice-scene"><div class="cube"><div class="cube__face cube__face--1"><div class="pip"></div></div><div class="cube__face cube__face--6"><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div><div class="cube__face cube__face--3"><div class="pip"></div><div class="pip"></div><div class="pip"></div></div><div class="cube__face cube__face--4"><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div><div class="cube__face cube__face--2"><div class="pip"></div><div class="pip"></div></div><div class="cube__face cube__face--5"><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div></div></div>
+                </a>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex items-center gap-2">
+                <button class="p-2 text-[#BDC3C7] hover:text-[#E67E22] relative transition-colors" title="Уведомления"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg><span class="absolute top-2 right-2 w-2 h-2 bg-[#E67E22] rounded-full border-2 border-white"></span></button>
+                <div class="h-6 w-[1px] bg-[#F1F2F6] mx-2"></div>
+                {% if user %}<div class="flex items-center gap-3"><div class="w-8 h-8 bg-[#E67E22] rounded-lg flex items-center justify-center text-white font-bold text-xs shadow-md">{{ user.username[0].upper() }}</div><a href="/logout" class="text-[10px] font-bold text-[#BDC3C7] hover:text-[#C0392B] uppercase tracking-widest transition-colors">Выход</a></div>
+                {% else %}<a href="/login" class="text-xs font-bold text-[#7F8C8D] hover:text-[#E67E22] px-2">Войти</a><a href="/register" class="bg-[#E67E22] text-white text-[10px] font-bold px-4 py-2 rounded-lg hover:bg-[#D35400] transition-all uppercase tracking-wider">Регистрация</a>{% endif %}
             </div>
         </div>
+        <div id="tags-panel" class="bg-[#F8F9FA] border-b border-[#F1F2F6]"><div class="max-w-6xl mx-auto px-16 py-4 flex flex-wrap gap-2">{% set categories = ['Шахматы', 'Фотография', 'Вархаммер', 'Спорт', 'Кулинария', 'Кодинг', 'Йога', 'Музыка', 'Рисование'] %}{% for cat in categories %}<a href="/?search={{ cat }}" class="px-3 py-1 bg-white border border-[#F1F2F6] rounded-full text-[10px] font-bold text-[#7F8C8D] hover:bg-[#E67E22] hover:text-white hover:border-[#E67E22] transition-all uppercase tracking-tighter">{{ cat }}</a>{% endfor %}</div></div>
     </nav>
 
     <div class="max-w-4xl mx-auto p-6 md:p-12">
-        <!-- Header -->
-        <header class="mb-16 text-center">
-            <h1 class="text-5xl md:text-6xl font-bold text-[#2D3436] mb-4 tracking-tight">HobbyHeaven</h1>
-            <p class="text-xl text-[#7F8C8D] font-serif flex flex-col md:flex-row items-center justify-center gap-2 md:gap-4 italic">
-                <span>то, что любим</span>
-                <span class="hidden md:block text-[#E67E22] opacity-40 font-normal not-italic">•</span>
-                <span>там, где делимся</span>
-            </p>
+        <header class="mb-12 text-center">
+            <h1 class="text-6xl md:text-8xl font-bold text-[#2D3436] mb-4 tracking-tighter opacity-90">HobbyHeaven</h1>
+            <p class="text-lg text-[#7F8C8D] font-serif flex flex-col md:flex-row items-center justify-center gap-2 md:gap-4 italic"><span>то, что любим</span><span class="hidden md:block text-[#E67E22] opacity-40 font-normal not-italic">•</span><span>там, где делимся</span></p>
         </header>
-
-        <!-- Create Hobby Section -->
-        <section class="mb-20">
-            {% if user %}
-            <div class="bg-white p-8 md:p-10 rounded-[32px] border border-[#F1F2F6] shadow-sm">
-                <h2 class="text-3xl font-bold mb-8 flex items-center gap-3">
-                    <span class="w-1.5 h-8 bg-[#E67E22] rounded-full"></span>
-                    Поделиться увлечением
-                </h2>
-                <form action="/create-hobby" method="post" enctype="multipart/form-data" class="space-y-8">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        <div class="space-y-2 relative">
-                            <label class="text-sm font-semibold uppercase tracking-wider text-[#95A5A6] ml-1">Название хобби</label>
-                            <input id="hobby-input" class="w-full bg-[#F8F9FA] border-none rounded-2xl p-4 focus:ring-2 focus:ring-[#E67E22] outline-none transition-all placeholder:text-[#BDC3C7]" 
-                                   type="text" name="title" placeholder="Например: Фотография, Шахматы..." autocomplete="off" required>
-                            
-                            <!-- Custom Autocomplete Suggestions -->
-                            <div id="autocomplete-results" class="absolute z-20 left-0 right-0 bg-white mt-2 rounded-2xl shadow-xl border border-[#F1F2F6] hidden overflow-hidden">
-                                <!-- JS will inject options here -->
-                            </div>
-                        </div>
-                        <div class="space-y-2 relative">
-                            <label class="text-sm font-semibold uppercase tracking-wider text-[#95A5A6] ml-1">Теги (через запятую)</label>
-                            <input id="tags-input" class="w-full bg-[#F8F9FA] border-none rounded-2xl p-4 focus:ring-2 focus:ring-[#E67E22] outline-none transition-all placeholder:text-[#BDC3C7]" 
-                                   type="text" name="tags_input" placeholder="Спорт, Музыка, Настольные игры..." autocomplete="off">
-                            <div id="tags-results" class="absolute z-20 left-0 right-0 bg-white mt-2 rounded-2xl shadow-xl border border-[#F1F2F6] hidden overflow-hidden"></div>
+        <div class="space-y-12">
+            {% for hobby in hobbies %}
+            <article class="post-card bg-white rounded-[48px] border border-[#F1F2F6] overflow-hidden group">
+                <div class="flex flex-col md:flex-row {{ 'md:flex-row-reverse' if loop.index0 % 2 == 1 }}">
+                    <div class="md:w-5/12 relative h-80 md:h-auto overflow-hidden">
+                        {% if hobby.image_path %}<img src="/uploads/{{ hobby.image_path }}" class="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 cursor-pointer" onclick="openImage(this.src)">{% endif %}
+                    </div>
+                    <div class="p-10 md:p-14 md:w-7/12 flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-center mb-8"><span class="px-4 py-1.5 bg-orange-50 text-[#E67E22] rounded-full text-[10px] font-bold uppercase tracking-widest">{{ hobby.title }}</span><time class="text-[#BDC3C7] text-[10px] font-bold">{{ hobby.created_at.strftime('%d.%m.%Y') }}</time></div>
+                            <h3 class="text-3xl font-bold mb-6 text-[#2D3436]">{{ hobby.author_user.username if hobby.author_user else hobby.author }}</h3>
+                            <div class="text-[#7F8C8D] font-serif text-lg italic line-clamp-4">{{ hobby.description | safe }}</div>
                         </div>
                     </div>
-
-                    <div class="space-y-2">
-                        <label class="text-sm font-semibold uppercase tracking-wider text-[#95A5A6] ml-1">История, прогресс или совет</label>
-                        <textarea name="description" id="editor"></textarea>
-                    </div>
-
-                    <div class="flex flex-col md:flex-row items-center justify-between gap-6 pt-4">
-                        <div class="flex items-center gap-6">
-                            <label class="group cursor-pointer flex items-center gap-3 text-[#7F8C8D] hover:text-[#E67E22] transition-colors">
-                                <div class="w-12 h-12 bg-[#F8F9FA] rounded-full flex items-center justify-center group-hover:bg-[#FDF2E9]">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                    </svg>
-                                </div>
-                                <span class="font-medium">Прикрепить фотографию</span>
-                                <input type="file" name="image" class="hidden" onchange="previewImage(this, 'createPreview')">
-                            </label>
-                            
-                            <!-- Thumbnail Preview -->
-                            <div id="createPreviewContainer" class="hidden relative group">
-                                <img id="createPreview" class="w-16 h-16 object-cover rounded-xl border-2 border-[#E67E22] shadow-sm">
-                                <button type="button" onclick="clearImage('createPreview', 'createPreviewContainer')" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 shadow-lg opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <button class="w-full md:w-auto bg-[#E67E22] text-white font-bold px-10 py-4 rounded-2xl hover:bg-[#D35400] shadow-lg shadow-orange-200 transition-all active:scale-95" type="submit">
-                            Опубликовать в Раю
-                        </button>
-                    </div>
-                </form>
-            </div>
-            {% else %}
-            <div class="bg-[#FDF2E9] p-10 rounded-[40px] border border-orange-100 text-center">
-                <h3 class="text-2xl font-bold mb-4">Хотите поделиться своей историей?</h3>
-                <p class="text-[#7F8C8D] font-serif italic mb-8">Войдите в систему или создайте аккаунт, чтобы вдохновлять других.</p>
-                <div class="flex justify-center gap-4">
-                    <a href="/login" class="bg-[#E67E22] text-white font-bold px-8 py-3.5 rounded-2xl hover:bg-[#D35400] shadow-lg shadow-orange-200 transition-all">Войти</a>
-                    <a href="/register" class="bg-white text-[#E67E22] border border-orange-200 font-bold px-8 py-3.5 rounded-2xl hover:bg-orange-50 transition-all">Регистрация</a>
                 </div>
-            </div>
-            {% endif %}
-        </section>
-
-        <!-- Search & Feed -->
-        <section>
-            <div class="flex flex-col md:flex-row items-center justify-between mb-10 gap-6">
-                <h2 class="text-4xl font-bold">Истории сообщества</h2>
-                <form action="/" method="get" class="w-full md:w-auto relative group">
-                    <input type="text" name="search" value="{{ search }}" placeholder="Найти хобби..." 
-                           class="w-full md:w-80 bg-white border border-[#F1F2F6] rounded-2xl px-6 py-3 focus:ring-2 focus:ring-[#E67E22] outline-none transition-all shadow-sm pr-12">
-                    <button type="submit" class="absolute right-4 top-1/2 -translate-y-1/2 text-[#BDC3C7] group-hover:text-[#E67E22] transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                    </button>
-                    {% if search %}
-                    <a href="/" class="absolute -bottom-6 right-0 text-xs text-[#E67E22] hover:underline">Сбросить поиск</a>
-                    {% endif %}
-                </form>
-            </div>
-
-            {% if not hobbies %}
-            <div class="text-center py-20 bg-white rounded-[40px] border border-[#F1F2F6] shadow-sm">
-                <p class="text-[#7F8C8D] font-serif italic text-xl">Ничего не найдено... Возможно, стоит начать новую историю?</p>
-            </div>
-            {% endif %}
-
-            <div class="space-y-12">
-                {% for hobby in hobbies %}
-                <article class="post-card bg-white rounded-[40px] border border-[#F1F2F6] overflow-hidden">
-                    <div class="flex flex-col md:flex-row {{ 'md:flex-row-reverse' if loop.index0 % 2 == 1 }}">
-                        <!-- Media Section -->
-                        <div class="md:w-5/12 relative h-72 md:h-auto overflow-hidden group">
-                            {% if hobby.image_path %}
-                            <img src="/uploads/{{ hobby.image_path }}" 
-                                 class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 cursor-pointer"
-                                 onclick="openImage(this.src)">
-                            {% else %}
-                            <div class="absolute inset-0 bg-[#F8F9FA] flex items-center justify-center">
-                                <span class="text-[#BDC3C7] italic font-serif text-lg">Без фото... пока что</span>
-                            </div>
-                            {% endif %}
-                        </div>
-
-                        <!-- Content Section -->
-                        <div class="p-8 md:p-12 md:w-7/12 flex flex-col justify-between bg-white">
-                            <div>
-                                <div class="flex justify-between items-center mb-6">
-                                    <div class="flex flex-wrap gap-2">
-                                        <span class="px-4 py-1.5 bg-[#FDF2E9] text-[#E67E22] rounded-full text-xs font-bold uppercase tracking-widest">
-                                            {{ hobby.title }}
-                                        </span>
-                                        {% for tag in hobby.tags %}
-                                        <span class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-[10px] font-bold uppercase tracking-tighter">
-                                            #{{ tag.name }}
-                                        </span>
-                                        {% endfor %}
-                                    </div>
-                                    <time class="text-[#BDC3C7] text-sm font-medium">{{ hobby.created_at.strftime('%d.%m.%Y') }}</time>
-                                </div>
-                                <h3 class="text-3xl font-bold leading-tight mb-6 text-[#2D3436]">{{ hobby.author_user.username if hobby.author_user else hobby.author or 'Странник' }}</h3>
-                                <div class="text-[#7F8C8D] leading-relaxed font-serif text-lg italic line-clamp-4">
-                                    {{ hobby.description | safe }}
-                                </div>
-                            </div>
-
-                            <div class="mt-10 flex items-center justify-between border-t border-[#F8F9FA] pt-6">
-                                {% if user and (hobby.author_id == user.id or user.is_admin) %}
-                                    <div class="flex gap-4 items-center">
-                                        {% if hobby.author_id == user.id %}
-                                        <a href="/edit/{{ hobby.id }}" class="text-[#E67E22] font-bold hover:underline">Изменить</a>
-                                        {% endif %}
-                                        <form action="/delete-hobby/{{ hobby.id }}" method="post" onsubmit="return confirm('Вы уверены, что хотите удалить эту историю?');">
-                                            <button class="text-[#BDC3C7] hover:text-[#C0392B] transition-colors font-medium">Удалить</button>
-                                        </form>
-                                    </div>
-                                {% else %}
-                                    <span class="text-[#BDC3C7] text-sm">Только для чтения</span>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                </article>
-                {% endfor %}
-            </div>
-        </section>
+            </article>
+            {% endfor %}
+        </div>
     </div>
 
     <!-- Image Modal -->
-    <div id="imageModal" class="fixed inset-0 bg-[#2D3436]/90 hidden z-50 p-4 items-center justify-center cursor-zoom-out" onclick="this.classList.add('hidden')">
-        <img id="modalImg" class="max-h-full max-w-full rounded-2xl shadow-2xl">
+    <div id="imageModal" class="fixed inset-0 bg-[#2D3436]/90 hidden z-[200] p-4 items-center justify-center cursor-zoom-out" onclick="this.classList.add('hidden')"><img id="modalImg" class="max-h-full max-w-full rounded-2xl shadow-2xl"></div>
+
+    <!-- GIANT LOGO TEST AREA (DETAILED REFERENCE) -->
+    <div class="fixed inset-0 flex items-center justify-center z-[150] pointer-events-none">
+        <div class="pointer-events-auto bg-white p-10 rounded-[60px] shadow-2xl border-4 border-orange-100">
+            <div class="w-[400px] h-[400px] flex items-center justify-center">
+                <svg width="400" height="400" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                  <rect width="200" height="200" rx="24" fill="#F5F4FF"/>
+                 
+                  <!-- brush rotated -45°, centered at (100,100) -->
+                  <g transform="rotate(-45, 100, 100)">
+                    <!-- handle -->
+                    <rect x="93" y="56" width="14" height="96" rx="4" fill="#C9946A"/>
+                    <!-- end cap -->
+                    <ellipse cx="100" cy="150" rx="7" ry="3.5" fill="#A87450"/>
+                    <!-- grain -->
+                    <line x1="97" y1="62" x2="97" y2="147" stroke="#A87450" stroke-width="0.8" opacity="0.45"/>
+                    <line x1="103" y1="62" x2="103" y2="147" stroke="#A87450" stroke-width="0.8" opacity="0.35"/>
+                    <!-- ferrule -->
+                    <rect x="90" y="42" width="20" height="16" rx="3" fill="#C0BEB6"/>
+                    <rect x="90" y="54" width="20" height="3" rx="1" fill="#9A9892"/>
+                    <!-- bristles (limit slimness, elongated tip -4) -->
+                    <path d="M96 42 Q81 18 100 -4"   stroke="#2C2C2A" stroke-width="1.1" fill="none" stroke-linecap="round"/>
+                    <path d="M97.3 42 Q88 18 100 -4"   stroke="#3d3d3a" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+                    <path d="M98.6 42 Q94 18 100 -4"   stroke="#2C2C2A" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+                    <path d="M100 42 Q100 18 100 -4"    stroke="#3d3d3a" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+                    <path d="M101.4 42 Q106 18 100 -4"  stroke="#2C2C2A" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+                    <path d="M102.7 42 Q112 18 100 -4"  stroke="#3d3d3a" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+                    <path d="M104 42 Q119 18 100 -4"   stroke="#2C2C2A" stroke-width="1.1" fill="none" stroke-linecap="round"/>
+                  </g>
+                 
+                  <!-- subtle corner sparkle -->
+                  <circle cx="158" cy="42" r="3" fill="#7F77DD" opacity="0.35"/>
+                  <circle cx="168" cy="32" r="2" fill="#AFA9EC" opacity="0.3"/>
+                  <circle cx="174" cy="48" r="1.5" fill="#534AB7" opacity="0.25"/>
+                </svg>
+            </div>
+        </div>
     </div>
 
     <script>
-        ClassicEditor
-            .create(document.querySelector('#editor'), {
-                toolbar: [ 'heading', '|', 'bold', 'italic', 'link', 'bulletedList', 'numberedList', 'blockQuote' ],
-                placeholder: 'Расскажите о своих успехах, трудностях или поделитесь мудростью...'
-            })
-            .catch(error => console.error(error));
-
-        function openImage(src) {
-            const modal = document.getElementById("imageModal");
-            const img = document.getElementById("modalImg");
-            img.src = src;
-            modal.classList.remove("hidden");
-            modal.classList.add("flex");
-        }
-
-        function previewImage(input, previewId) {
-            const preview = document.getElementById(previewId);
-            const container = document.getElementById(previewId + 'Container');
-            
-            if (input.files && input.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    preview.src = e.target.result;
-                    container.classList.remove('hidden');
-                }
-                reader.readAsDataURL(input.files[0]);
-            }
-        }
-
-        function clearImage(previewId, containerId) {
-            const preview = document.getElementById(previewId);
-            const container = document.getElementById(containerId);
-            const input = container.previousElementSibling.querySelector('input[type="file"]');
-            
-            input.value = "";
-            preview.src = "";
-            container.classList.add('hidden');
-        }
-
-        // --- Custom Autocomplete Logic ---
-        const hobbyInput = document.getElementById('hobby-input');
-        const resultsDiv = document.getElementById('autocomplete-results');
-        const tagsInput = document.getElementById('tags-input');
-        const tagsResultsDiv = document.getElementById('tags-results');
-        
-        const hobbiesList = [
-            {ru: "Вархаммер", en: "Warhammer"}, 
-            {ru: "Вархаммер 40000", en: "Warhammer 40k"}, 
-            {ru: "Вархаммер: Эра Сигмара", en: "Warhammer Age of Sigmar"}, 
-            {ru: "Подземелья и Драконы", en: "Dungeons & Dragons (D&D)"},
-            {ru: "Магия: Встреча", en: "Magic: The Gathering (MTG)"},
-            {ru: "Рисование", en: "Drawing"}, 
-            {ru: "Кулинария", en: "Cooking"}, 
-            {ru: "Фотография", en: "Photography"}, 
-            {ru: "Программирование", en: "Programming"}, 
-            {ru: "Вязание", en: "Knitting"}, 
-            {ru: "Путешествия", en: "Traveling"}, 
-            {ru: "Йога", en: "Yoga"}, 
-            {ru: "Спорт", en: "Sport"}, 
-            {ru: "Шахматы", en: "Chess"}, 
-            {ru: "Шашки", en: "Checkers"}, 
-            {ru: "Музыка", en: "Music"}, 
-            {ru: "Шитьё", en: "Sewing"}, 
-            {ru: "Танцы", en: "Dancing"}, 
-            {ru: "Моделирование", en: "Modeling"},
-            {ru: "Велоспорт", en: "Cycling"},
-            {ru: "Походы", en: "Hiking"},
-            {ru: "Садоводство", en: "Gardening"}
-        ];
-
-        const tagsList = [
-            {ru: "Вархаммер", en: "Warhammer"},
-            {ru: "Настольные игры", en: "Board Games"}, 
-            {ru: "Спорт", en: "Sport"}, 
-            {ru: "Музыка", en: "Music"}, 
-            {ru: "Шахматы", en: "Chess"},
-            {ru: "Искусство", en: "Art"}, 
-            {ru: "Рукоделие", en: "Handmade"}, 
-            {ru: "Технологии", en: "Tech"}, 
-            {ru: "Природа", en: "Nature"}, 
-            {ru: "Еда", en: "Food"}, 
-            {ru: "Интеллектуальное", en: "Intellectual"}, 
-            {ru: "Для начинающих", en: "Beginner"}, 
-            {ru: "Профи", en: "Pro"}
-        ];
-
-        // Hobby Autocomplete
-        hobbyInput.addEventListener('input', function() {
-            const value = this.value.toLowerCase().trim();
-            resultsDiv.innerHTML = '';
-            if (!value) { resultsDiv.classList.add('hidden'); return; }
-            
-            const filtered = hobbiesList.filter(h => 
-                h.ru.toLowerCase().includes(value) || h.en.toLowerCase().includes(value)
-            );
-
-            if (filtered.length > 0) {
-                filtered.forEach(h => {
-                    const item = document.createElement('div');
-                    item.className = 'p-4 hover:bg-[#FDF2E9] hover:text-[#E67E22] cursor-pointer transition-colors border-b border-[#F8F9FA] last:border-0 font-medium flex justify-between';
-                    item.innerHTML = `<span>${h.ru}</span><span class="text-xs text-[#BDC3C7]">${h.en}</span>`;
-                    item.onclick = () => { 
-                        hobbyInput.value = h.ru; 
-                        resultsDiv.classList.add('hidden'); 
-                    };
-                    resultsDiv.appendChild(item);
-                });
-                resultsDiv.classList.remove('hidden');
-            } else { resultsDiv.classList.add('hidden'); }
-        });
-
-        // Tags Autocomplete
-        tagsInput.addEventListener('input', function() {
-            const parts = this.value.split(',');
-            const lastPart = parts[parts.length - 1].trim().toLowerCase();
-            tagsResultsDiv.innerHTML = '';
-            
-            if (!lastPart) { tagsResultsDiv.classList.add('hidden'); return; }
-            
-            const filtered = tagsList.filter(t => 
-                t.ru.toLowerCase().includes(lastPart) || t.en.toLowerCase().includes(lastPart)
-            );
-
-            if (filtered.length > 0) {
-                filtered.forEach(t => {
-                    const item = document.createElement('div');
-                    item.className = 'p-4 hover:bg-[#FDF2E9] hover:text-[#E67E22] cursor-pointer transition-colors border-b border-[#F8F9FA] last:border-0 font-medium flex justify-between';
-                    item.innerHTML = `<span>${t.ru}</span><span class="text-xs text-[#BDC3C7]">${t.en}</span>`;
-                    item.onclick = () => {
-                        parts[parts.length - 1] = " " + t.ru;
-                        tagsInput.value = parts.join(',').trim();
-                        tagsResultsDiv.classList.add('hidden');
-                        tagsInput.focus();
-                    };
-                    tagsResultsDiv.appendChild(item);
-                });
-                tagsResultsDiv.classList.remove('hidden');
-            } else { tagsResultsDiv.classList.add('hidden'); }
-        });
-
-        // Close lists if click outside
-        document.addEventListener('click', function(e) {
-            if (!hobbyInput.contains(e.target) && !resultsDiv.contains(e.target)) resultsDiv.classList.add('hidden');
-            if (!tagsInput.contains(e.target) && !tagsResultsDiv.contains(e.target)) tagsResultsDiv.classList.add('hidden');
-        });
+        ClassicEditor.create(document.querySelector('#editor'), { toolbar: [ 'bold', 'italic', 'link', 'bulletedList', 'numberedList' ], placeholder: 'Поделись своей страстью...' }).catch(error => console.error(error));
+        function openImage(src) { const modal = document.getElementById("imageModal"); const img = document.getElementById("modalImg"); img.src = src; modal.classList.remove("hidden"); modal.classList.add("flex"); }
+        function previewImage(input, previewId) { const preview = document.getElementById(previewId); const container = document.getElementById(previewId + 'Container'); if (input.files && input.files[0]) { const reader = new FileReader(); reader.onload = e => { preview.src = e.target.result; container.classList.remove('hidden'); }; reader.readAsDataURL(input.files[0]); } }
     </script>
 </body>
 </html>
