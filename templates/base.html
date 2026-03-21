@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <link rel="icon" type="image/svg+xml" href="/static/images/favicon.svg">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}HobbyHeaven{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                colors: {
+                    primary: '#FF9F43',
+                    'primary-dark': '#E67E22',
+                    'primary-deep': '#D35400',
+                    accent: '#EE5253',
+                    dark: '#2D3436',
+                    muted: '#7F8C8D',
+                    'muted-light': '#95A5A6',
+                    subtle: '#BDC3C7',
+                    surface: '#F8F9FA',
+                    border: '#F1F2F6',
+                    cream: '#FDFCF0',
+                    danger: '#C0392B',
+                },
+                fontFamily: {
+                    sans: ['Inter', 'sans-serif'],
+                    serif: ['Lora', 'serif'],
+                },
+                borderRadius: {
+                    'card': '2rem',
+                    'card-lg': '3rem',
+                },
+            }
+        }
+    }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <style>
+        h1, h2, h3, .font-serif { font-family: 'Lora', serif; }
+    </style>
+    {% block head %}{% endblock %}
+</head>
+<body class="font-sans text-dark antialiased bg-cream {% block body_class %}{% endblock %}">
+    {% block nav %}{% endblock %}
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+    {% block footer %}{% endblock %}
+    <script src="/static/js/app.js"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

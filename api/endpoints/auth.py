@@ -1,16 +1,14 @@
 from fastapi import APIRouter, Depends, Form, Request, status, Response, BackgroundTasks
 from fastapi.responses import RedirectResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from typing import Optional
 
 from database import get_db
 from services import auth_service
 from core.security import create_access_token
-from core.config import TEMPLATES_DIR
+from core.templates import templates
 
 router = APIRouter()
-templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 def send_mock_email(email: str, code: str):
     print(f"\n{'='*40}\n[MOCK EMAIL] To: {email}\n[MOCK EMAIL] Verification Code: {code}\n{'='*40}\n")

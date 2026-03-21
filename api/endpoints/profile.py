@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, Form, Request, status, UploadFile, File, HTTPException, BackgroundTasks
 from fastapi.responses import RedirectResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from datetime import datetime, timezone
 from typing import Optional
@@ -8,13 +7,12 @@ from typing import Optional
 from database import get_db
 from models import User, Persona, Hobby
 from core.security import get_current_user
-from core.config import TEMPLATES_DIR
+from core.templates import templates
 from services.hobby_service import save_upload_image
 from services import auth_service
 from api.endpoints.auth import send_mock_email
 
 router = APIRouter()
-templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 @router.get("/cabinet")
 async def cabinet_page(request: Request, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):

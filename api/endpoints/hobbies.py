@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, Form, Request, status, UploadFile, File, HTTPException
 from fastapi.responses import RedirectResponse
-from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, func
 from typing import Optional
@@ -9,10 +8,10 @@ from database import get_db
 from models import Hobby, User, Persona
 from services import hobby_service
 from core.security import get_current_user
-from core.config import TEMPLATES_DIR, HOBBY_SYNONYMS
+from core.config import HOBBY_SYNONYMS
+from core.templates import templates
 
 router = APIRouter()
-templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
 @router.get("/")
 async def home(
@@ -35,10 +34,12 @@ async def home(
         filters = [Hobby.title.ilike(f"%{term}%") for term in search_terms]
         query = query.filter(or_(*filters))
         
+    total = query.count()
+    total_pages = max(1, (total + limit - 1) // limit)
     hobbies = query.order_by(Hobby.created_at.desc()).offset(offset).limit(limit).all()
     return templates.TemplateResponse(
         "index.html",
-        {"request": request, "hobbies": hobbies, "page": page, "search": search, "user": current_user}
+        {"request": request, "hobbies": hobbies, "page": page, "total_pages": total_pages, "search": search, "user": current_user}
     )
 
 @router.get("/random")

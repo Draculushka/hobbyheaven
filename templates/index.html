@@ -1,199 +1,241 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg width='40' height='40' viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'><defs><!-- Vibrant Sunrise Gradient --><linearGradient id='modernBg' x1='0%' y1='0%' x2='100%' y2='100%'><stop offset='0%' style='stop-color:#FF9F43;stop-opacity:1' /><stop offset='100%' style='stop-color:#EE5253;stop-opacity:1' /></linearGradient><!-- Glassmorphism Effect --><filter id='glassBlur' x='-20%' y='-20%' width='140%' height='140%'><feGaussianBlur in='SourceGraphic' stdDeviation='2' /></filter><!-- Glow for the S-trail --><filter id='trailGlow'><feGaussianBlur stdDeviation='3' result='blur' /><feComposite in='SourceGraphic' in2='blur' operator='over' /></filter></defs><rect width='200' height='200' rx='40' fill='url(#modernBg)'/><!-- Luminous S-Swirl (Modern Style with Full Tapering) --><path d='M30 30 C 5 65, 35 145, 100 100 C 165 55, 195 135, 172 172 L 168 168 C 185 145, 155 65, 100 100 C 45 135, 15 55, 30 30 Z' fill='white' opacity='0.15' filter='url(#trailGlow)'/><path d='M30 30 C 10 60, 40 140, 100 100 C 160 60, 190 140, 170 170 L 171 170 C 193 140, 163 60, 103 100 C 43 140, 13 60, 33 30 Z' fill='white' opacity='0.4'/><!-- Simplified Stylized Brush --><g transform='rotate(-45, 100, 100)'><!-- Premium Matte Handle --><rect x='94' y='65' width='12' height='108' rx='6' fill='#2D3436'/><!-- Glass / Chrome Ferrule --><rect x='90' y='45' width='20' height='20' rx='4' fill='white' opacity='0.3' filter='url(#glassBlur)'/><rect x='90' y='45' width='20' height='20' rx='4' fill='none' stroke='white' stroke-width='0.5' opacity='0.5'/><!-- Minimalist Bristle Silhouette --><path d='M92 45 Q88 15 100 0 Q112 15 108 45 Z' fill='white'/><!-- Tip Polish --><circle cx='100' cy='8' r='6' fill='white' opacity='0.4'/></g><!-- Dynamic light glints --><circle cx='160' cy='40' r='4' fill='white' opacity='0.6'/><circle cx='40' cy='160' r='2' fill='white' opacity='0.4'/></svg>">
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>HobbyHeaven — Территория Творчества</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.ckeditor.com/ckeditor5/40.0.0/classic/ckeditor.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Inter', sans-serif; background-color: #FDFCF0; }
-        h1, h2, h3, .font-serif { font-family: 'Lora', serif; }
-        .ck-editor__editable { min-height: 200px; color: #2D3436; border-radius: 0 0 16px 16px !important; background-color: #fff !important; }
-        .ck-toolbar { border-radius: 16px 16px 0 0 !important; border: 1px solid #F1F2F6 !important; background-color: #F8F9FA !important; }
-        .post-card { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
-        .post-card:hover { transform: translateY(-6px); box-shadow: 0 20px 40px -15px rgba(230, 126, 34, 0.12); }
-        
-        #tags-panel { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
-        #tags-panel.open { max-height: 200px; }
+{% extends "base.html" %}
 
-        /* --- 3D NAV CUBE --- */
-        .dice-scene { width: 16px; height: 16px; perspective: 80px; display: inline-block; }
-        .cube { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transform: rotateX(-20deg) rotateY(30deg); transition: transform 1.2s cubic-bezier(0.19, 1, 0.22, 1); }
-        .surprise-btn:hover .cube { transform: rotateX(720deg) rotateY(900deg); }
-        .cube__face { position: absolute; width: 16px; height: 16px; border: 0.2px solid #BDC3C7; background: rgba(255, 255, 255, 0.95); display: grid; grid-template: repeat(3, 1fr) / repeat(3, 1fr); padding: 1.5px; box-sizing: border-box; transition: border-color 0.4s ease; }
-        .pip { width: 2.2px; height: 2.2px; background-color: #BDC3C7; border-radius: 50%; align-self: center; justify-self: center; transition: background-color 0.4s ease; }
-        .surprise-btn:hover .cube__face { border-color: #E67E22; }
-        .surprise-btn:hover .pip { background-color: #E67E22; }
-        .cube__face--1 { transform: rotateY(0deg) translateZ(8px); }
-        .cube__face--6 { transform: rotateY(180deg) translateZ(8px); }
-        .cube__face--3 { transform: rotateY(90deg) translateZ(8px); }
-        .cube__face--4 { transform: rotateY(-90deg) translateZ(8px); }
-        .cube__face--2 { transform: rotateX(90deg) translateZ(8px); }
-        .cube__face--5 { transform: rotateX(-90deg) translateZ(8px); }
-        .cube__face--1 .pip { grid-area: 2/2; }
-        .cube__face--2 .pip:nth-child(1) { grid-area: 1/1; } .cube__face--2 .pip:nth-child(2) { grid-area: 3/3; }
-        .cube__face--3 .pip:nth-child(1) { grid-area: 1/1; } .cube__face--3 .pip:nth-child(2) { grid-area: 2/2; } .cube__face--3 .pip:nth-child(3) { grid-area: 3/3; }
-        .cube__face--4 .pip:nth-child(1) { grid-area: 1/1; } .cube__face--4 .pip:nth-child(2) { grid-area: 1/3; } .cube__face--4 .pip:nth-child(3) { grid-area: 3/1; } .cube__face--4 .pip:nth-child(4) { grid-area: 3/3; }
-        .cube__face--5 .pip:nth-child(1) { grid-area: 1/1; } .cube__face--5 .pip:nth-child(2) { grid-area: 1/3; } .cube__face--5 .pip:nth-child(3) { grid-area: 2/2; } .cube__face--5 .pip:nth-child(4) { grid-area: 3/1; } .cube__face--5 .pip:nth-child(5) { grid-area: 3/3; }
-        .cube__face--6 .pip:nth-child(1) { grid-area: 1/1; } .cube__face--6 .pip:nth-child(2) { grid-area: 1/3; } .cube__face--6 .pip:nth-child(3) { grid-area: 2/1; } .cube__face--6 .pip:nth-child(4) { grid-area: 2/3; } .cube__face--6 .pip:nth-child(5) { grid-area: 3/1; } .cube__face--6 .pip:nth-child(6) { grid-area: 3/3; }
-    </style>
-</head>
-<body class="text-[#2D3436] antialiased">
-    <!-- Navigation Bar -->
-    <nav class="bg-white/90 backdrop-blur-xl sticky top-0 z-50 border-b border-[#F1F2F6]">
-        <div class="max-w-6xl mx-auto px-4 h-16 flex items-center gap-4">
-            
-            <!-- Modern Premium Logo (2025 Style) -->
-            <div class="flex-shrink-0">
+{% block title %}HobbyHeaven — Территория Творчества{% endblock %}
+
+{% block head %}
+<style>
+    .ck-editor__editable { min-height: 200px; color: #2D3436; border-radius: 0 0 1rem 1rem !important; background-color: #fff !important; }
+    .ck-toolbar { border-radius: 1rem 1rem 0 0 !important; border: 1px solid #F1F2F6 !important; background-color: #F8F9FA !important; }
+    .post-card { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+    .post-card:hover { transform: translateY(-6px); box-shadow: 0 20px 40px -15px rgba(230, 126, 34, 0.12); }
+    #tags-panel { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out; }
+    #tags-panel.open { max-height: 200px; }
+
+    /* 3D Dice */
+    .dice-scene { width: 16px; height: 16px; perspective: 80px; display: inline-block; }
+    .cube { width: 100%; height: 100%; position: relative; transform-style: preserve-3d; transform: rotateX(-20deg) rotateY(30deg); transition: transform 1.2s cubic-bezier(0.19, 1, 0.22, 1); }
+    .surprise-btn:hover .cube { transform: rotateX(720deg) rotateY(900deg); }
+    .cube__face { position: absolute; width: 16px; height: 16px; border: 0.2px solid #BDC3C7; background: rgba(255,255,255,0.95); display: grid; grid-template: repeat(3,1fr)/repeat(3,1fr); padding: 1.5px; box-sizing: border-box; transition: border-color 0.4s ease; }
+    .pip { width: 2.2px; height: 2.2px; background-color: #BDC3C7; border-radius: 50%; align-self: center; justify-self: center; transition: background-color 0.4s ease; }
+    .surprise-btn:hover .cube__face { border-color: #E67E22; }
+    .surprise-btn:hover .pip { background-color: #E67E22; }
+    .cube__face--1 { transform: rotateY(0deg) translateZ(8px); }
+    .cube__face--6 { transform: rotateY(180deg) translateZ(8px); }
+    .cube__face--3 { transform: rotateY(90deg) translateZ(8px); }
+    .cube__face--4 { transform: rotateY(-90deg) translateZ(8px); }
+    .cube__face--2 { transform: rotateX(90deg) translateZ(8px); }
+    .cube__face--5 { transform: rotateX(-90deg) translateZ(8px); }
+    .cube__face--1 .pip { grid-area: 2/2; }
+    .cube__face--2 .pip:nth-child(1) { grid-area: 1/1; } .cube__face--2 .pip:nth-child(2) { grid-area: 3/3; }
+    .cube__face--3 .pip:nth-child(1) { grid-area: 1/1; } .cube__face--3 .pip:nth-child(2) { grid-area: 2/2; } .cube__face--3 .pip:nth-child(3) { grid-area: 3/3; }
+    .cube__face--4 .pip:nth-child(1) { grid-area: 1/1; } .cube__face--4 .pip:nth-child(2) { grid-area: 1/3; } .cube__face--4 .pip:nth-child(3) { grid-area: 3/1; } .cube__face--4 .pip:nth-child(4) { grid-area: 3/3; }
+    .cube__face--5 .pip:nth-child(1) { grid-area: 1/1; } .cube__face--5 .pip:nth-child(2) { grid-area: 1/3; } .cube__face--5 .pip:nth-child(3) { grid-area: 2/2; } .cube__face--5 .pip:nth-child(4) { grid-area: 3/1; } .cube__face--5 .pip:nth-child(5) { grid-area: 3/3; }
+    .cube__face--6 .pip:nth-child(1) { grid-area: 1/1; } .cube__face--6 .pip:nth-child(2) { grid-area: 1/3; } .cube__face--6 .pip:nth-child(3) { grid-area: 2/1; } .cube__face--6 .pip:nth-child(4) { grid-area: 2/3; } .cube__face--6 .pip:nth-child(5) { grid-area: 3/1; } .cube__face--6 .pip:nth-child(6) { grid-area: 3/3; }
+</style>
+{% if user %}
+<script src="https://cdn.ckeditor.com/ckeditor5/40.0.0/classic/ckeditor.js"></script>
+{% endif %}
+{% endblock %}
+
+{% block nav %}
+<nav class="bg-white/90 backdrop-blur-xl sticky top-0 z-50 border-b border-border">
+    <div class="max-w-6xl mx-auto px-4">
+        <!-- Desktop row -->
+        <div class="h-16 flex items-center gap-4">
+            <!-- Logo -->
+            <a href="/" class="flex-shrink-0" aria-label="HobbyHeaven — на главную">
                 <div class="w-10 h-10 rounded-xl overflow-hidden shadow-[0_8px_16px_-3px_rgba(230,126,34,0.3)] hover:scale-110 transition-all duration-500">
-                    <svg width="40" height="40" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-                      <defs>
-                        <!-- Vibrant Sunrise Gradient -->
-                        <linearGradient id="modernBg" x1="0%" y1="0%" x2="100%" y2="100%">
-                          <stop offset="0%" style="stop-color:#FF9F43;stop-opacity:1" />
-                          <stop offset="100%" style="stop-color:#EE5253;stop-opacity:1" />
-                        </linearGradient>
-                        <!-- Glassmorphism Effect -->
-                        <filter id="glassBlur" x="-20%" y="-20%" width="140%" height="140%">
-                          <feGaussianBlur in="SourceGraphic" stdDeviation="2" />
-                        </filter>
-                        <!-- Glow for the S-trail -->
-                        <filter id="trailGlow">
-                          <feGaussianBlur stdDeviation="3" result="blur" />
-                          <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                        </filter>
-                      </defs>
-                      <rect width="200" height="200" rx="40" fill="url(#modernBg)"/>
-                      
-                      <!-- Luminous S-Swirl (Modern Style with Full Tapering) -->
-                      <path d="M30 30 C 5 65, 35 145, 100 100 C 165 55, 195 135, 172 172 L 168 168 C 185 145, 155 65, 100 100 C 45 135, 15 55, 30 30 Z" fill="white" opacity="0.15" filter="url(#trailGlow)"/>
-                      <path d="M30 30 C 10 60, 40 140, 100 100 C 160 60, 190 140, 170 170 L 171 170 C 193 140, 163 60, 103 100 C 43 140, 13 60, 33 30 Z" fill="white" opacity="0.4"/>
-                      
-                      <!-- Simplified Stylized Brush -->
-                      <g transform="rotate(-45, 100, 100)">
-                        <!-- Premium Matte Handle -->
-                        <rect x="94" y="65" width="12" height="108" rx="6" fill="#2D3436"/>
-                        <!-- Glass / Chrome Ferrule -->
-                        <rect x="90" y="45" width="20" height="20" rx="4" fill="white" opacity="0.3" filter="url(#glassBlur)"/>
-                        <rect x="90" y="45" width="20" height="20" rx="4" fill="none" stroke="white" stroke-width="0.5" opacity="0.5"/>
-                        <!-- Minimalist Bristle Silhouette -->
-                        <path d="M92 45 Q88 15 100 0 Q112 15 108 45 Z" fill="white"/>
-                        <!-- Tip Polish -->
-                        <circle cx="100" cy="8" r="6" fill="white" opacity="0.4"/>
-                      </g>
-                      
-                      <!-- Dynamic light glints -->
-                      <circle cx="160" cy="40" r="4" fill="white" opacity="0.6"/>
-                      <circle cx="40" cy="160" r="2" fill="white" opacity="0.4"/>
-                    </svg>
+                    <img src="/static/images/favicon.svg" alt="HobbyHeaven" width="40" height="40">
                 </div>
-            </div>
+            </a>
 
-            <!-- Search & Interactive Tools -->
-            <div class="flex-grow max-w-2xl flex items-center gap-2">
-                <form action="/" method="get" class="flex-grow relative group">
-                    <input type="text" name="search" value="{{ search }}" placeholder="Найти вдохновение..." class="w-full bg-[#F8F9FA] border-none rounded-xl px-10 py-2 text-sm focus:ring-2 focus:ring-[#FF9F43] outline-none transition-all">
-                    <div class="absolute left-3 top-1/2 -translate-y-1/2 text-[#BDC3C7]"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg></div>
+            <!-- Search (desktop) -->
+            <div class="hidden md:flex flex-grow max-w-2xl items-center gap-2">
+                <form action="/" method="get" class="flex-grow relative">
+                    <label for="search-desktop" class="sr-only">Поиск</label>
+                    <input id="search-desktop" type="text" name="search" value="{{ search }}" placeholder="Найти вдохновение..."
+                           class="w-full bg-surface border-none rounded-xl px-10 py-2 text-sm focus:ring-2 focus:ring-primary outline-none transition-all">
+                    <div class="absolute left-3 top-1/2 -translate-y-1/2 text-subtle">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    </div>
                 </form>
-                <button onclick="document.getElementById('tags-panel').classList.toggle('open')" class="p-2 text-[#7F8C8D] hover:text-[#FF9F43] hover:bg-orange-50 rounded-lg transition-all" title="Категории"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 11h.01M7 15h.01M13 7h.01M13 11h.01M13 15h.01M17 7h.01M17 11h.01M17 15h.01" /></svg></button>
-                <a href="/random" class="surprise-btn p-2 text-[#7F8C8D] hover:bg-orange-50 rounded-lg transition-all flex items-center justify-center" title="МНЕ ПОВЕЗЁТ">
+                <button onclick="document.getElementById('tags-panel').classList.toggle('open')" class="p-2 text-muted hover:text-primary hover:bg-orange-50 rounded-lg transition-all" title="Категории" aria-label="Показать категории">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 11h.01M7 15h.01M13 7h.01M13 11h.01M13 15h.01M17 7h.01M17 11h.01M17 15h.01"/></svg>
+                </button>
+                <a href="/random" class="surprise-btn p-2 text-muted hover:bg-orange-50 rounded-lg transition-all flex items-center justify-center" title="МНЕ ПОВЕЗЁТ" aria-label="Случайное хобби">
                     <div class="dice-scene"><div class="cube"><div class="cube__face cube__face--1"><div class="pip"></div></div><div class="cube__face cube__face--6"><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div><div class="cube__face cube__face--3"><div class="pip"></div><div class="pip"></div><div class="pip"></div></div><div class="cube__face cube__face--4"><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div><div class="cube__face cube__face--2"><div class="pip"></div><div class="pip"></div></div><div class="cube__face cube__face--5"><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div></div></div>
                 </a>
             </div>
 
             <!-- Actions -->
-            <div class="flex items-center gap-2">
-                <button class="p-2 text-[#BDC3C7] hover:text-[#FF9F43] relative transition-colors" title="Уведомления"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg><span class="absolute top-2 right-2 w-2 h-2 bg-[#FF9F43] rounded-full border-2 border-white"></span></button>
-                <div class="h-6 w-[1px] bg-[#F1F2F6] mx-2"></div>
+            <div class="flex items-center gap-2 ml-auto">
                 {% if user %}
                 {% set default_persona = user.personas | selectattr("is_default", "equalto", True) | first %}
                 {% set display_name = default_persona.username if default_persona else user.email.split('@')[0] %}
-                <div class="flex items-center gap-3">
-                    <a href="/cabinet" class="w-8 h-8 bg-[#FF9F43] rounded-lg flex items-center justify-center text-white font-bold text-xs shadow-md hover:scale-110 transition-transform" title="Личный кабинет">{{ display_name[0].upper() }}</a>
-                    <a href="/logout" class="text-[10px] font-bold text-[#BDC3C7] hover:text-[#C0392B] uppercase tracking-widest transition-colors">Выход</a>
-                </div>
-                {% else %}<a href="/login" class="text-xs font-bold text-[#7F8C8D] hover:text-[#FF9F43] px-2">Войти</a><a href="/register" class="bg-[#FF9F43] text-white text-[10px] font-bold px-4 py-2 rounded-lg hover:bg-[#EE5253] transition-all uppercase tracking-wider">Регистрация</a>{% endif %}
+                <a href="/cabinet" class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-bold text-xs shadow-md hover:scale-110 transition-transform" title="Личный кабинет" aria-label="Личный кабинет">{{ display_name[0].upper() }}</a>
+                <a href="/logout" class="text-xs font-bold text-subtle hover:text-danger uppercase tracking-widest transition-colors px-2 py-2">Выход</a>
+                {% else %}
+                <a href="/login" class="text-xs font-bold text-muted hover:text-primary px-2 py-2">Войти</a>
+                <a href="/register" class="bg-primary text-white text-[10px] font-bold px-4 py-2 rounded-lg hover:bg-accent transition-all uppercase tracking-wider">Регистрация</a>
+                {% endif %}
             </div>
         </div>
-        <div id="tags-panel" class="bg-[#F8F9FA] border-b border-[#F1F2F6]"><div class="max-w-6xl mx-auto px-16 py-4 flex flex-wrap gap-2">{% set categories = ['Шахматы', 'Фотография', 'Вархаммер', 'Спорт', 'Кулинария', 'Кодинг', 'Йога', 'Музыка', 'Рисование'] %}{% for cat in categories %}<a href="/?search={{ cat }}" class="px-3 py-1 bg-white border border-[#F1F2F6] rounded-full text-[10px] font-bold text-[#7F8C8D] hover:bg-[#FF9F43] hover:text-white hover:border-[#FF9F43] transition-all uppercase tracking-tighter">{{ cat }}</a>{% endfor %}</div></div>
-    </nav>
 
-    <div class="max-w-4xl mx-auto p-6 md:p-12">
-        <header class="mb-12 text-center">
-            <h1 class="text-6xl md:text-8xl font-bold text-[#2D3436] mb-4 tracking-tighter opacity-90">HobbyHeaven</h1>
-            <p class="text-lg text-[#7F8C8D] font-serif flex flex-col md:flex-row items-center justify-center gap-2 md:gap-4 italic"><span>то, что любим</span><span class="hidden md:block text-[#FF9F43] opacity-40 font-normal not-italic">•</span><span>там, где делимся</span></p>
-        </header>
-
-        <!-- Post Creation (Only for registered users) -->
-        {% if user %}
-        <div class="mb-16 bg-white rounded-[48px] border border-[#F1F2F6] p-8 shadow-sm">
-            <form action="/create-hobby" method="post" enctype="multipart/form-data" class="space-y-6">
-                <div class="flex items-center gap-4 mb-4">
-                    <select name="persona_id" class="bg-[#F8F9FA] text-[#2D3436] text-sm font-bold px-4 py-2 rounded-xl border-none outline-none focus:ring-2 focus:ring-[#FF9F43]">
-                        {% for persona in user.personas %}
-                        <option value="{{ persona.id }}">{{ persona.username }}</option>
-                        {% endfor %}
-                    </select>
-                    <span class="text-xs font-bold text-[#BDC3C7] uppercase tracking-wider">От чьего имени пишем?</span>
+        <!-- Mobile search row -->
+        <div class="md:hidden pb-3 flex items-center gap-2">
+            <form action="/" method="get" class="flex-grow relative">
+                <label for="search-mobile" class="sr-only">Поиск</label>
+                <input id="search-mobile" type="text" name="search" value="{{ search }}" placeholder="Найти вдохновение..."
+                       class="w-full bg-surface border-none rounded-xl px-10 py-2 text-sm focus:ring-2 focus:ring-primary outline-none transition-all">
+                <div class="absolute left-3 top-1/2 -translate-y-1/2 text-subtle">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                 </div>
-                <input type="text" name="title" placeholder="Название твоего хобби" class="w-full text-2xl font-bold border-none focus:ring-0 placeholder-[#BDC3C7]" required>
-                <textarea id="editor" name="description"></textarea>
-                
-                <div class="flex flex-wrap gap-4 items-center justify-between pt-4">
-                    <div class="flex gap-4">
-                        <label class="cursor-pointer bg-[#F8F9FA] hover:bg-orange-50 text-[#7F8C8D] hover:text-[#FF9F43] px-6 py-3 rounded-2xl transition-all flex items-center gap-2 font-bold text-sm">
-                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                            Фото
-                            <input type="file" name="file" class="hidden" accept="image/*" onchange="previewImage(this, 'createPreview')">
-                        </label>
-                        <input type="text" name="tags" placeholder="Теги (через запятую)" class="bg-[#F8F9FA] border-none rounded-2xl px-6 py-3 text-sm focus:ring-2 focus:ring-orange-100 outline-none w-48 font-medium">
-                    </div>
-                    <button type="submit" class="bg-[#2D3436] hover:bg-[#FF9F43] text-white px-10 py-3 rounded-2xl font-bold transition-all shadow-lg hover:shadow-orange-200">Опубликовать</button>
-                </div>
-                <div id="createPreviewContainer" class="hidden mt-4"><img id="createPreview" class="h-32 w-32 object-cover rounded-2xl border-2 border-orange-100"></div>
             </form>
+            <a href="/random" class="surprise-btn p-2 text-muted hover:bg-orange-50 rounded-lg transition-all flex items-center justify-center" aria-label="Случайное хобби">
+                <div class="dice-scene"><div class="cube"><div class="cube__face cube__face--1"><div class="pip"></div></div><div class="cube__face cube__face--6"><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div><div class="cube__face cube__face--3"><div class="pip"></div><div class="pip"></div><div class="pip"></div></div><div class="cube__face cube__face--4"><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div><div class="cube__face cube__face--2"><div class="pip"></div><div class="pip"></div></div><div class="cube__face cube__face--5"><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div></div></div>
+            </a>
         </div>
-        {% endif %}
+    </div>
 
-        <div class="space-y-12">
-            {% for hobby in hobbies %}
-            <article class="post-card bg-white rounded-[48px] border border-[#F1F2F6] overflow-hidden group">
-                <div class="flex flex-col md:flex-row {{ 'md:flex-row-reverse' if loop.index0 % 2 == 1 }}">
-                    <div class="md:w-5/12 relative h-80 md:h-auto overflow-hidden">
-                        {% if hobby.image_path %}<img src="/uploads/{{ hobby.image_path }}" class="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 cursor-pointer" onclick="openImage(this.src)">{% endif %}
-                    </div>
-                    <div class="p-10 md:p-14 md:w-7/12 flex flex-col justify-between">
-                        <div>
-                            <div class="flex justify-between items-center mb-8"><span class="px-4 py-1.5 bg-orange-50 text-[#FF9F43] rounded-full text-[10px] font-bold uppercase tracking-widest">{{ hobby.title }}</span><time class="text-[#BDC3C7] text-[10px] font-bold">{{ hobby.created_at.strftime('%d.%m.%Y') }}</time></div>
-                            <div class="flex items-center gap-3 mb-6">
-                                <a href="/profile/{{ hobby.author_persona.username }}" class="flex-shrink-0 group/avatar">
-                                    {% if hobby.author_persona.avatar_path %}
-                                    <img src="/uploads/{{ hobby.author_persona.avatar_path }}" class="w-10 h-10 rounded-full object-cover border border-[#F1F2F6] group-hover/avatar:border-[#FF9F43] transition-colors">
-                                    {% else %}
-                                    <div class="w-10 h-10 bg-[#FF9F43] rounded-full flex items-center justify-center text-white font-bold text-sm shadow-sm group-hover/avatar:scale-110 transition-transform">{{ hobby.author_persona.username[0].upper() }}</div>
-                                    {% endif %}
-                                </a>
-                                <a href="/profile/{{ hobby.author_persona.username }}" class="text-2xl font-bold text-[#2D3436] hover:text-[#FF9F43] transition-colors">
-                                    {{ hobby.author_persona.username }}
-                                </a>
-                            </div>
-                            <div class="text-[#7F8C8D] font-serif text-lg italic line-clamp-4">{{ hobby.description | safe }}</div>
-                        </div>
-                    </div>
-                </div>
-            </article>
+    <!-- Tags panel -->
+    <div id="tags-panel" class="bg-surface border-b border-border">
+        <div class="max-w-6xl mx-auto px-6 md:px-16 py-4 flex flex-wrap gap-2">
+            {% set categories = ['Шахматы', 'Фотография', 'Вархаммер', 'Спорт', 'Кулинария', 'Кодинг', 'Йога', 'Музыка', 'Рисование'] %}
+            {% for cat in categories %}
+            <a href="/?search={{ cat }}" class="px-3 py-1 bg-white border border-border rounded-full text-[10px] font-bold text-muted hover:bg-primary hover:text-white hover:border-primary transition-all uppercase tracking-tighter">{{ cat }}</a>
             {% endfor %}
         </div>
-    <!-- Image Modal -->
-    <div id="imageModal" class="fixed inset-0 bg-[#2D3436]/90 hidden z-[200] p-4 items-center justify-center cursor-zoom-out" onclick="this.classList.add('hidden')"><img id="modalImg" class="max-h-full max-w-full rounded-2xl shadow-2xl"></div>
+    </div>
+</nav>
+{% endblock %}
 
-    <script>
-        ClassicEditor.create(document.querySelector('#editor'), { toolbar: [ 'bold', 'italic', 'link', 'bulletedList', 'numberedList' ], placeholder: 'Поделись своей страстью...' }).catch(error => console.error(error));
-        function openImage(src) { const modal = document.getElementById("imageModal"); const img = document.getElementById("modalImg"); img.src = src; modal.classList.remove("hidden"); modal.classList.add("flex"); }
-        function previewImage(input, previewId) { const preview = document.getElementById(previewId); const container = document.getElementById(previewId + 'Container'); if (input.files && input.files[0]) { const reader = new FileReader(); reader.onload = e => { preview.src = e.target.result; container.classList.remove('hidden'); }; reader.readAsDataURL(input.files[0]); } }
-    </script>
-</body>
-</html>
+{% block content %}
+<div class="max-w-4xl mx-auto p-6 md:p-12">
+    <header class="mb-12 text-center">
+        <h1 class="text-6xl md:text-8xl font-bold text-dark mb-4 tracking-tighter opacity-90">HobbyHeaven</h1>
+        <p class="text-lg text-muted font-serif flex flex-col md:flex-row items-center justify-center gap-2 md:gap-4 italic">
+            <span>то, что любим</span>
+            <span class="hidden md:block text-primary opacity-40 font-normal not-italic">&bull;</span>
+            <span>там, где делимся</span>
+        </p>
+    </header>
+
+    <!-- Post Creation (Only for registered users) -->
+    {% if user %}
+    <section class="mb-16 bg-white rounded-card-lg border border-border p-8 shadow-sm" aria-label="Создание публикации">
+        <form action="/create-hobby" method="post" enctype="multipart/form-data" class="space-y-6">
+            <div class="flex items-center gap-4 mb-4">
+                <label for="persona-select" class="sr-only">Выбрать персону</label>
+                <select id="persona-select" name="persona_id" class="bg-surface text-dark text-sm font-bold px-4 py-2 rounded-xl border-none outline-none focus:ring-2 focus:ring-primary">
+                    {% for persona in user.personas %}
+                    <option value="{{ persona.id }}">{{ persona.username }}</option>
+                    {% endfor %}
+                </select>
+                <span class="text-xs font-bold text-subtle uppercase tracking-wider">От чьего имени пишем?</span>
+            </div>
+            <label for="hobby-title" class="sr-only">Название хобби</label>
+            <input id="hobby-title" type="text" name="title" placeholder="Название твоего хобби" class="w-full text-2xl font-bold border-none focus:ring-0 placeholder-subtle" required>
+            <label for="editor" class="sr-only">Описание</label>
+            <textarea id="editor" name="description"></textarea>
+
+            <div class="flex flex-wrap gap-4 items-center justify-between pt-4">
+                <div class="flex flex-wrap gap-4">
+                    <label class="cursor-pointer bg-surface hover:bg-orange-50 text-muted hover:text-primary px-6 py-3 rounded-2xl transition-all flex items-center gap-2 font-bold text-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        Фото
+                        <input type="file" name="file" class="hidden" accept="image/*" onchange="previewImage(this, 'createPreview')">
+                    </label>
+                    <label for="hobby-tags" class="sr-only">Теги</label>
+                    <input id="hobby-tags" type="text" name="tags" placeholder="Теги (через запятую)" class="bg-surface border-none rounded-2xl px-6 py-3 text-sm focus:ring-2 focus:ring-orange-100 outline-none w-48 font-medium">
+                </div>
+                <button type="submit" class="bg-dark hover:bg-primary text-white px-10 py-3 rounded-2xl font-bold transition-all shadow-lg hover:shadow-orange-200">Опубликовать</button>
+            </div>
+            <div id="createPreviewContainer" class="hidden mt-4">
+                <img id="createPreview" class="h-32 w-32 object-cover rounded-2xl border-2 border-orange-100" alt="Предпросмотр изображения" width="128" height="128">
+            </div>
+        </form>
+    </section>
+    {% endif %}
+
+    <!-- Hobby Feed -->
+    <div class="space-y-12">
+        {% for hobby in hobbies %}
+        <article class="post-card bg-white rounded-card-lg border border-border overflow-hidden group">
+            <div class="flex flex-col md:flex-row {{ 'md:flex-row-reverse' if loop.index0 % 2 == 1 }}">
+                <div class="md:w-5/12 relative overflow-hidden aspect-[4/3] md:aspect-auto">
+                    {% if hobby.image_path %}
+                    <img src="/uploads/{{ hobby.image_path }}" alt="{{ hobby.title }}" loading="lazy"
+                         class="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 cursor-pointer"
+                         onclick="openImage(this.src)">
+                    {% endif %}
+                </div>
+                <div class="p-8 md:p-14 md:w-7/12 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-center mb-8">
+                            <h2 class="px-4 py-1.5 bg-orange-50 text-primary rounded-full text-[10px] font-bold uppercase tracking-widest font-sans">{{ hobby.title }}</h2>
+                            <time class="text-subtle text-[10px] font-bold font-sans" datetime="{{ hobby.created_at.isoformat() }}">{{ hobby.created_at.strftime('%d.%m.%Y') }}</time>
+                        </div>
+                        <div class="flex items-center gap-3 mb-6">
+                            <a href="/profile/{{ hobby.author_persona.username }}" class="flex-shrink-0 group/avatar" aria-label="Профиль {{ hobby.author_persona.username }}">
+                                {% if hobby.author_persona.avatar_path %}
+                                <img src="/uploads/{{ hobby.author_persona.avatar_path }}" alt="{{ hobby.author_persona.username }}" loading="lazy"
+                                     class="w-10 h-10 rounded-full object-cover border border-border group-hover/avatar:border-primary transition-colors" width="40" height="40">
+                                {% else %}
+                                <div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-bold text-sm shadow-sm group-hover/avatar:scale-110 transition-transform">{{ hobby.author_persona.username[0].upper() }}</div>
+                                {% endif %}
+                            </a>
+                            <a href="/profile/{{ hobby.author_persona.username }}" class="text-2xl font-bold text-dark hover:text-primary transition-colors">
+                                {{ hobby.author_persona.username }}
+                            </a>
+                        </div>
+                        <div class="text-muted font-serif text-lg italic line-clamp-4">{{ hobby.description | sanitize }}</div>
+                    </div>
+                </div>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if total_pages > 1 %}
+    <nav class="mt-16 flex items-center justify-center gap-2" aria-label="Пагинация">
+        {% if page > 1 %}
+        <a href="/?page={{ page - 1 }}{% if search %}&search={{ search }}{% endif %}" class="px-4 py-2 bg-white border border-border rounded-2xl text-sm font-bold text-muted hover:text-primary hover:border-primary transition-all">
+            &larr; Назад
+        </a>
+        {% endif %}
+        {% for p in range(1, total_pages + 1) %}
+            {% if p == page %}
+            <span class="px-4 py-2 bg-primary text-white rounded-2xl text-sm font-bold">{{ p }}</span>
+            {% elif p == 1 or p == total_pages or (p >= page - 2 and p <= page + 2) %}
+            <a href="/?page={{ p }}{% if search %}&search={{ search }}{% endif %}" class="px-4 py-2 bg-white border border-border rounded-2xl text-sm font-bold text-muted hover:text-primary hover:border-primary transition-all">{{ p }}</a>
+            {% elif p == page - 3 or p == page + 3 %}
+            <span class="px-2 text-subtle">&hellip;</span>
+            {% endif %}
+        {% endfor %}
+        {% if page < total_pages %}
+        <a href="/?page={{ page + 1 }}{% if search %}&search={{ search }}{% endif %}" class="px-4 py-2 bg-white border border-border rounded-2xl text-sm font-bold text-muted hover:text-primary hover:border-primary transition-all">
+            Вперёд &rarr;
+        </a>
+        {% endif %}
+    </nav>
+    {% endif %}
+</div>
+
+<!-- Image Modal -->
+<div id="imageModal" role="dialog" aria-modal="true" aria-label="Просмотр изображения" tabindex="-1"
+     class="fixed inset-0 bg-dark/90 hidden z-[200] p-4 items-center justify-center cursor-zoom-out" onclick="closeImageModal()">
+    <img id="modalImg" class="max-h-full max-w-full rounded-2xl shadow-2xl" alt="Увеличенное изображение">
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if user %}
+<script>
+    ClassicEditor.create(document.querySelector('#editor'), {
+        toolbar: ['bold', 'italic', 'link', 'bulletedList', 'numberedList'],
+        placeholder: 'Поделись своей страстью...'
+    }).catch(error => console.error(error));
+</script>
+{% endif %}
+{% endblock %}

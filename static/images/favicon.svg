@@ -1,0 +1,27 @@
+<svg width="40" height="40" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="modernBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FF9F43;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#EE5253;stop-opacity:1" />
+    </linearGradient>
+    <filter id="glassBlur" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="2" />
+    </filter>
+    <filter id="trailGlow">
+      <feGaussianBlur stdDeviation="3" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+  <rect width="200" height="200" rx="40" fill="url(#modernBg)"/>
+  <path d="M30 30 C 5 65, 35 145, 100 100 C 165 55, 195 135, 172 172 L 168 168 C 185 145, 155 65, 100 100 C 45 135, 15 55, 30 30 Z" fill="white" opacity="0.15" filter="url(#trailGlow)"/>
+  <path d="M30 30 C 10 60, 40 140, 100 100 C 160 60, 190 140, 170 170 L 171 170 C 193 140, 163 60, 103 100 C 43 140, 13 60, 33 30 Z" fill="white" opacity="0.4"/>
+  <g transform="rotate(-45, 100, 100)">
+    <rect x="94" y="65" width="12" height="108" rx="6" fill="#2D3436"/>
+    <rect x="90" y="45" width="20" height="20" rx="4" fill="white" opacity="0.3" filter="url(#glassBlur)"/>
+    <rect x="90" y="45" width="20" height="20" rx="4" fill="none" stroke="white" stroke-width="0.5" opacity="0.5"/>
+    <path d="M92 45 Q88 15 100 0 Q112 15 108 45 Z" fill="white"/>
+    <circle cx="100" cy="8" r="6" fill="white" opacity="0.4"/>
+  </g>
+  <circle cx="160" cy="40" r="4" fill="white" opacity="0.6"/>
+  <circle cx="40" cy="160" r="2" fill="white" opacity="0.4"/>
+</svg>
