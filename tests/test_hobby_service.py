@@ -65,7 +65,8 @@ class TestSanitizeDescription:
         result = sanitize_description(html)
         assert "<b>bold</b>" in result
         assert "<i>italic</i>" in result
-        assert '<a href="https://example.com">link</a>' in result
+        assert '<a href="https://example.com"' in result
+        assert "link</a>" in result
 
     # TP-HS03
     def test_forbidden_tags_stripped(self):

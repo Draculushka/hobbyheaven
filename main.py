@@ -1,17 +1,28 @@
 import logging
+import os
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(name)s %(levelname)s %(message)s')
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-import os
+from starlette_csrf import CSRFMiddleware
 
-from core.config import UPLOAD_DIR
+from core.config import UPLOAD_DIR, SECRET_KEY
 from api.endpoints import auth, hobbies, profile
 
 # Убедимся, что папка для загрузок существует
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 app = FastAPI(title="Hobby Heaven")
+
+# CSRF-защита (double-submit cookie)
+app.add_middleware(
+    CSRFMiddleware,
+    secret=SECRET_KEY,
+    cookie_name="csrftoken",
+    cookie_secure=False,  # True в production с HTTPS
+    cookie_samesite="lax",
+)
 
 # Подключение статики
 app.mount("/static", StaticFiles(directory="static"), name="static")

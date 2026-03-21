@@ -20,6 +20,7 @@ uvicorn==0.41.0
 alembic==1.14.1
 python-dotenv==1.0.1
 nh3==0.2.18
+markupsafe==3.0.3
 passlib[bcrypt]==1.7.4
 bcrypt==4.0.1
 python-jose[cryptography]==3.3.0

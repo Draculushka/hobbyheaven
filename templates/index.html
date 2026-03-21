@@ -127,6 +127,7 @@
     {% if user %}
     <section class="mb-16 bg-white rounded-card-lg border border-border p-8 shadow-sm" aria-label="Создание публикации">
         <form action="/create-hobby" method="post" enctype="multipart/form-data" class="space-y-6">
+            <input type="hidden" name="csrftoken" value="{{ request.cookies.get('csrftoken', '') }}">
             <div class="flex items-center gap-4 mb-4">
                 <label for="persona-select" class="sr-only">Выбрать персону</label>
                 <select id="persona-select" name="persona_id" class="bg-surface text-dark text-sm font-bold px-4 py-2 rounded-xl border-none outline-none focus:ring-2 focus:ring-primary">
@@ -140,17 +141,16 @@
             <input id="hobby-title" type="text" name="title" placeholder="Название твоего хобби" class="w-full text-2xl font-bold border-none focus:ring-0 placeholder-subtle" required>
             <label for="editor" class="sr-only">Описание</label>
             <textarea id="editor" name="description"></textarea>
-            <!-- TODO: add CSRF token field -->
 
             <div class="flex flex-wrap gap-4 items-center justify-between pt-4">
                 <div class="flex flex-wrap gap-4">
                     <label class="cursor-pointer bg-surface hover:bg-orange-50 text-muted hover:text-primary px-6 py-3 rounded-2xl transition-all flex items-center gap-2 font-bold text-sm">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                         Фото
-                        <input type="file" name="file" class="hidden" accept="image/*" onchange="previewImage(this, 'createPreview')">
+                        <input type="file" name="image" class="hidden" accept="image/*" onchange="previewImage(this, 'createPreview')">
                     </label>
                     <label for="hobby-tags" class="sr-only">Теги</label>
-                    <input id="hobby-tags" type="text" name="tags" placeholder="Теги (через запятую)" class="bg-surface border-none rounded-2xl px-6 py-3 text-sm focus:ring-2 focus:ring-orange-100 outline-none w-48 font-medium">
+                    <input id="hobby-tags" type="text" name="tags_input" placeholder="Теги (через запятую)" class="bg-surface border-none rounded-2xl px-6 py-3 text-sm focus:ring-2 focus:ring-orange-100 outline-none w-48 font-medium">
                 </div>
                 <button type="submit" class="bg-dark hover:bg-primary text-white px-10 py-3 rounded-2xl font-bold transition-all shadow-lg hover:shadow-orange-200">Опубликовать</button>
             </div>

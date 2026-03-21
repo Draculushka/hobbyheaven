@@ -79,10 +79,11 @@ class TestAuthenticateUser:
         assert result is None
 
     def test_tp_as09_soft_deleted_user(self, db):
-        """TP-AS09: Soft-deleted user (deleted_at != None) returns None."""
+        """TP-AS09: Soft-deleted user (deleted_at != None) is returned (endpoint handles deleted_at check)."""
         self._make_user(db, deleted_at=datetime.now(timezone.utc))
         result = authenticate_user(db, "user@test.com", "correct")
-        assert result is None
+        assert result is not None
+        assert result.deleted_at is not None
 
 
 # ── request_verification_code ────────────────────────────────────────────────

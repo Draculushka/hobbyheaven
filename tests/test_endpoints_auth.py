@@ -29,8 +29,13 @@ def auth_headers(email="test@test.com"):
     return {"access_token": f"Bearer {token}"}
 
 
+def _csrf(client):
+    """Return CSRF header dict."""
+    return {"x-csrftoken": client.cookies.get("csrftoken", "")}
+
+
 # ---------------------------------------------------------------------------
-# TP-A06: Password 5 chars (< min=6) → 422
+# TP-A06: Password 5 chars (< min=6) -> 422
 # ---------------------------------------------------------------------------
 
 @patch("services.auth_service.request_verification_code", return_value="123456")
@@ -39,13 +44,14 @@ def test_password_too_short(mock_code, client, db):
     response = client.post(
         "/register",
         data={"username": "user1", "email": "short@test.com", "password": "12345"},
+        headers=_csrf(client),
         follow_redirects=False,
     )
     assert response.status_code == 422
 
 
 # ---------------------------------------------------------------------------
-# TP-A07: Password 6 chars (boundary) → success (303)
+# TP-A07: Password 6 chars (boundary) -> success (303)
 # ---------------------------------------------------------------------------
 
 @patch("services.auth_service.request_verification_code", return_value="123456")
@@ -54,6 +60,7 @@ def test_password_min_boundary(mock_code, client, db):
     response = client.post(
         "/register",
         data={"username": "user6", "email": "six@test.com", "password": "123456"},
+        headers=_csrf(client),
         follow_redirects=False,
     )
     assert response.status_code == 303
@@ -61,7 +68,7 @@ def test_password_min_boundary(mock_code, client, db):
 
 
 # ---------------------------------------------------------------------------
-# TP-A09: Password 65 chars (> max=64) → 422
+# TP-A09: Password 65 chars (> max=64) -> 422
 # ---------------------------------------------------------------------------
 
 @patch("services.auth_service.request_verification_code", return_value="123456")
@@ -70,23 +77,25 @@ def test_password_too_long(mock_code, client, db):
     response = client.post(
         "/register",
         data={"username": "userlong", "email": "long@test.com", "password": "A" * 65},
+        headers=_csrf(client),
         follow_redirects=False,
     )
     assert response.status_code == 422
 
 
 # ---------------------------------------------------------------------------
-# TP-A15: Verify correct code → 303 /, cookie set (mock verify_code)
+# TP-A15: Verify correct code -> 303 /, cookie set (mock verify_code)
 # ---------------------------------------------------------------------------
 
 @patch("services.auth_service.verify_code", return_value=True)
 def test_verify_correct_code(mock_verify, client, db):
-    """Submitting correct verification code → redirect to / with cookie set."""
+    """Submitting correct verification code -> redirect to / with cookie set."""
     create_user(db, email="verify@test.com", active=False)
 
     response = client.post(
         "/verify-email",
         data={"email": "verify@test.com", "code": "123456"},
+        headers=_csrf(client),
         follow_redirects=False,
     )
     assert response.status_code == 303
@@ -97,17 +106,18 @@ def test_verify_correct_code(mock_verify, client, db):
 
 
 # ---------------------------------------------------------------------------
-# TP-A16: Verify wrong code → redirect with error
+# TP-A16: Verify wrong code -> redirect with error
 # ---------------------------------------------------------------------------
 
 @patch("services.auth_service.verify_code", return_value=False)
 def test_verify_wrong_code(mock_verify, client, db):
-    """Submitting wrong verification code → redirect back with error."""
+    """Submitting wrong verification code -> redirect back with error."""
     create_user(db, email="verify2@test.com", active=False)
 
     response = client.post(
         "/verify-email",
         data={"email": "verify2@test.com", "code": "000000"},
+        headers=_csrf(client),
         follow_redirects=False,
     )
     assert response.status_code == 303
@@ -117,16 +127,17 @@ def test_verify_wrong_code(mock_verify, client, db):
 
 
 # ---------------------------------------------------------------------------
-# TP-A20: Login valid credentials → 303 /, cookie set
+# TP-A20: Login valid credentials -> 303 /, cookie set
 # ---------------------------------------------------------------------------
 
 def test_login_valid_credentials(client, db):
-    """Login with correct email/password → redirect to / with cookie."""
+    """Login with correct email/password -> redirect to / with cookie."""
     create_user(db, email="login@test.com", password="secret123", active=True)
 
     response = client.post(
         "/login",
         data={"email": "login@test.com", "password": "secret123"},
+        headers=_csrf(client),
         follow_redirects=False,
     )
     assert response.status_code == 303
@@ -136,11 +147,11 @@ def test_login_valid_credentials(client, db):
 
 
 # ---------------------------------------------------------------------------
-# TP-A23: Login soft-deleted user → redirect with error
+# TP-A23: Login soft-deleted user -> redirect with error
 # ---------------------------------------------------------------------------
 
 def test_login_soft_deleted_user(client, db):
-    """Login as a soft-deleted user → redirect with error message."""
+    """Login as a soft-deleted user -> redirect with error message."""
     user, _ = create_user(db, email="deleted@test.com", password="secret123", active=True)
     user.deleted_at = datetime.now(timezone.utc)
     db.commit()
@@ -148,6 +159,7 @@ def test_login_soft_deleted_user(client, db):
     response = client.post(
         "/login",
         data={"email": "deleted@test.com", "password": "secret123"},
+        headers=_csrf(client),
         follow_redirects=False,
     )
     assert response.status_code == 303
@@ -155,7 +167,7 @@ def test_login_soft_deleted_user(client, db):
 
 
 # ---------------------------------------------------------------------------
-# TP-A24: Login non-existent email → same response as wrong password
+# TP-A24: Login non-existent email -> same response as wrong password
 # ---------------------------------------------------------------------------
 
 def test_login_nonexistent_email(client, db):
@@ -166,6 +178,7 @@ def test_login_nonexistent_email(client, db):
     resp_wrong_pw = client.post(
         "/login",
         data={"email": "real@test.com", "password": "wrongpassword"},
+        headers=_csrf(client),
         follow_redirects=False,
     )
 
@@ -173,6 +186,7 @@ def test_login_nonexistent_email(client, db):
     resp_no_email = client.post(
         "/login",
         data={"email": "ghost@test.com", "password": "secret123"},
+        headers=_csrf(client),
         follow_redirects=False,
     )
 
@@ -195,6 +209,7 @@ def test_cookie_security_flags(client, db):
     response = client.post(
         "/login",
         data={"email": "cookie@test.com", "password": "secret123"},
+        headers=_csrf(client),
         follow_redirects=False,
     )
     set_cookie = response.headers.get("set-cookie", "").lower()

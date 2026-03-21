@@ -1,7 +1,7 @@
 import os
 import uuid
 from pathlib import Path
-import bleach
+import nh3
 from fastapi import HTTPException
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import or_, func
@@ -13,7 +13,12 @@ MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
 
 
 def sanitize_description(description: str) -> str:
-    return bleach.clean(description, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRS, protocols=ALLOWED_PROTOCOLS, strip=True)
+    return nh3.clean(
+        description,
+        tags=set(ALLOWED_TAGS),
+        attributes={k: set(v) for k, v in ALLOWED_ATTRS.items()},
+        url_schemes=set(ALLOWED_PROTOCOLS),
+    )
 
 
 def save_upload_image(file) -> str | None:

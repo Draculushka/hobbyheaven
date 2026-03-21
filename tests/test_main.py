@@ -28,6 +28,11 @@ def _auth_cookie(email="test@example.com"):
     return {"access_token": f"Bearer {token}"}
 
 
+def _csrf(client):
+    """Return CSRF header dict."""
+    return {"x-csrftoken": client.cookies.get("csrftoken", "")}
+
+
 # ---------------------------------------------------------------------------
 # Registration tests
 # ---------------------------------------------------------------------------
@@ -45,6 +50,7 @@ def test_register_user_success(mock_code, client, db):
     response = client.post(
         "/register",
         data={"username": "newuser", "email": "new@example.com", "password": "password123"},
+        headers=_csrf(client),
         follow_redirects=False,
     )
     assert response.status_code == 303
@@ -62,11 +68,13 @@ def test_register_duplicate_email(mock_code, client, db):
     client.post(
         "/register",
         data={"username": "first", "email": "dup@example.com", "password": "password123"},
+        headers=_csrf(client),
         follow_redirects=False,
     )
     response = client.post(
         "/register",
         data={"username": "second", "email": "dup@example.com", "password": "password123"},
+        headers=_csrf(client),
         follow_redirects=False,
     )
     assert response.status_code == 303
@@ -81,11 +89,13 @@ def test_register_duplicate_username(mock_code, client, db):
     client.post(
         "/register",
         data={"username": "taken", "email": "one@example.com", "password": "password123"},
+        headers=_csrf(client),
         follow_redirects=False,
     )
     response = client.post(
         "/register",
         data={"username": "taken", "email": "two@example.com", "password": "password123"},
+        headers=_csrf(client),
         follow_redirects=False,
     )
     assert response.status_code == 303
@@ -109,6 +119,7 @@ def test_login_invalid_credentials(client, db):
     response = client.post(
         "/login",
         data={"email": "test@example.com", "password": "wrongpassword"},
+        headers=_csrf(client),
         follow_redirects=False,
     )
     assert response.status_code == 303
@@ -121,6 +132,7 @@ def test_login_unverified_user(client, db):
     response = client.post(
         "/login",
         data={"email": "test@example.com", "password": "secret123"},
+        headers=_csrf(client),
         follow_redirects=False,
     )
     assert response.status_code == 303
@@ -165,6 +177,7 @@ def test_create_hobby_unauthenticated(client):
     response = client.post(
         "/create-hobby",
         data={"title": "Test", "description": "Test"},
+        headers=_csrf(client),
         follow_redirects=False,
     )
     assert response.status_code == 303
@@ -192,7 +205,11 @@ def test_delete_hobby_unauthenticated(client, db):
     db.commit()
     db.refresh(hobby)
 
-    response = client.post(f"/delete-hobby/{hobby.id}", follow_redirects=False)
+    response = client.post(
+        f"/delete-hobby/{hobby.id}",
+        headers=_csrf(client),
+        follow_redirects=False,
+    )
     assert response.status_code == 401
 
 

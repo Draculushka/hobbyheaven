@@ -38,5 +38,22 @@ def client(db):
 
     app.dependency_overrides[get_db] = override_get_db
     with TestClient(app) as c:
+        # Trigger CSRF cookie by doing a GET request
+        c.get("/login")
         yield c
     app.dependency_overrides.clear()
+
+
+def csrf_form_data(client, data=None):
+    """Add CSRF token to form data for POST requests."""
+    csrf = client.cookies.get("csrftoken", "")
+    result = {"csrftoken": csrf}
+    if data:
+        result.update(data)
+    return result
+
+
+def csrf_headers(client):
+    """Return headers dict with CSRF token for POST requests."""
+    csrf = client.cookies.get("csrftoken", "")
+    return {"x-csrftoken": csrf}

@@ -26,8 +26,13 @@ def auth_headers(email="test@test.com"):
     return {"access_token": f"Bearer {token}"}
 
 
+def _csrf(client):
+    """Return CSRF header dict."""
+    return {"x-csrftoken": client.cookies.get("csrftoken", "")}
+
+
 # ---------------------------------------------------------------------------
-# TP-H12: Authenticated, no persona_id → uses default persona, creates hobby
+# TP-H12: Authenticated, no persona_id -> uses default persona, creates hobby
 # ---------------------------------------------------------------------------
 
 def test_create_hobby_default_persona(client, db):
@@ -38,6 +43,7 @@ def test_create_hobby_default_persona(client, db):
     response = client.post(
         "/create-hobby",
         data={"title": "My Hobby", "description": "A great hobby"},
+        headers=_csrf(client),
         follow_redirects=False,
     )
     assert response.status_code == 303
@@ -48,11 +54,11 @@ def test_create_hobby_default_persona(client, db):
 
 
 # ---------------------------------------------------------------------------
-# TP-H14: IDOR: persona_id of another user → 403
+# TP-H14: IDOR: persona_id of another user -> 403
 # ---------------------------------------------------------------------------
 
 def test_idor_create_hobby_other_persona(client, db):
-    """Creating hobby with someone else's persona_id → 403."""
+    """Creating hobby with someone else's persona_id -> 403."""
     user1, persona1 = create_user(db, email="user1@test.com", username="user1")
     user2, persona2 = create_user(db, email="user2@test.com", username="user2")
 
@@ -61,17 +67,18 @@ def test_idor_create_hobby_other_persona(client, db):
     response = client.post(
         "/create-hobby",
         data={"title": "Stolen", "description": "IDOR attempt", "persona_id": str(persona2.id)},
+        headers=_csrf(client),
         follow_redirects=False,
     )
     assert response.status_code == 403
 
 
 # ---------------------------------------------------------------------------
-# TP-H20: IDOR: edit someone else's hobby → 403
+# TP-H20: IDOR: edit someone else's hobby -> 403
 # ---------------------------------------------------------------------------
 
 def test_idor_edit_others_hobby(client, db):
-    """User1 tries to access edit page for User2's hobby → 403."""
+    """User1 tries to access edit page for User2's hobby -> 403."""
     user1, persona1 = create_user(db, email="user1@test.com", username="user1")
     user2, persona2 = create_user(db, email="user2@test.com", username="user2")
 
@@ -86,7 +93,7 @@ def test_idor_edit_others_hobby(client, db):
 
 
 # ---------------------------------------------------------------------------
-# TP-H23: Update own hobby → success 303
+# TP-H23: Update own hobby -> success 303
 # ---------------------------------------------------------------------------
 
 def test_update_own_hobby(client, db):
@@ -102,6 +109,7 @@ def test_update_own_hobby(client, db):
     response = client.post(
         f"/update/{hobby.id}",
         data={"title": "Updated", "description": "New desc", "tags_input": ""},
+        headers=_csrf(client),
         follow_redirects=False,
     )
     assert response.status_code == 303
@@ -111,11 +119,11 @@ def test_update_own_hobby(client, db):
 
 
 # ---------------------------------------------------------------------------
-# TP-H24: IDOR: update someone else's hobby → 403
+# TP-H24: IDOR: update someone else's hobby -> 403
 # ---------------------------------------------------------------------------
 
 def test_idor_update_others_hobby(client, db):
-    """User1 tries to update User2's hobby → 403."""
+    """User1 tries to update User2's hobby -> 403."""
     user1, persona1 = create_user(db, email="user1@test.com", username="user1")
     user2, persona2 = create_user(db, email="user2@test.com", username="user2")
 
@@ -128,13 +136,14 @@ def test_idor_update_others_hobby(client, db):
     response = client.post(
         f"/update/{hobby.id}",
         data={"title": "Hacked", "description": "IDOR", "tags_input": ""},
+        headers=_csrf(client),
         follow_redirects=False,
     )
     assert response.status_code == 403
 
 
 # ---------------------------------------------------------------------------
-# TP-H26: Delete own hobby → 303, hobby removed
+# TP-H26: Delete own hobby -> 303, hobby removed
 # ---------------------------------------------------------------------------
 
 def test_delete_own_hobby(client, db):
@@ -147,7 +156,11 @@ def test_delete_own_hobby(client, db):
     hobby_id = hobby.id
 
     client.cookies.update(auth_headers("owner@test.com"))
-    response = client.post(f"/delete-hobby/{hobby_id}", follow_redirects=False)
+    response = client.post(
+        f"/delete-hobby/{hobby_id}",
+        headers=_csrf(client),
+        follow_redirects=False,
+    )
     assert response.status_code == 303
 
     deleted = db.query(Hobby).filter(Hobby.id == hobby_id).first()
@@ -155,11 +168,11 @@ def test_delete_own_hobby(client, db):
 
 
 # ---------------------------------------------------------------------------
-# TP-H27: IDOR: delete someone else's hobby (not admin) → 403
+# TP-H27: IDOR: delete someone else's hobby (not admin) -> 403
 # ---------------------------------------------------------------------------
 
 def test_idor_delete_others_hobby(client, db):
-    """Non-admin user tries to delete another user's hobby → 403."""
+    """Non-admin user tries to delete another user's hobby -> 403."""
     user1, persona1 = create_user(db, email="user1@test.com", username="user1")
     user2, persona2 = create_user(db, email="user2@test.com", username="user2")
 
@@ -169,12 +182,16 @@ def test_idor_delete_others_hobby(client, db):
     db.refresh(hobby)
 
     client.cookies.update(auth_headers("user1@test.com"))
-    response = client.post(f"/delete-hobby/{hobby.id}", follow_redirects=False)
+    response = client.post(
+        f"/delete-hobby/{hobby.id}",
+        headers=_csrf(client),
+        follow_redirects=False,
+    )
     assert response.status_code == 403
 
 
 # ---------------------------------------------------------------------------
-# TP-H28: Admin deletes someone else's hobby → 303
+# TP-H28: Admin deletes someone else's hobby -> 303
 # ---------------------------------------------------------------------------
 
 def test_admin_can_delete_others_hobby(client, db):
@@ -190,7 +207,11 @@ def test_admin_can_delete_others_hobby(client, db):
     hobby_id = hobby.id
 
     client.cookies.update(auth_headers("admin@test.com"))
-    response = client.post(f"/delete-hobby/{hobby_id}", follow_redirects=False)
+    response = client.post(
+        f"/delete-hobby/{hobby_id}",
+        headers=_csrf(client),
+        follow_redirects=False,
+    )
     assert response.status_code == 303
 
     deleted = db.query(Hobby).filter(Hobby.id == hobby_id).first()
