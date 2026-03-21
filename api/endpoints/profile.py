@@ -1,4 +1,3 @@
-import hmac
 from fastapi import APIRouter, Depends, Form, Request, status, UploadFile, File, HTTPException, BackgroundTasks
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session, joinedload
@@ -25,12 +24,15 @@ def cabinet_page(request: Request, page: int = 1, db: Session = Depends(get_db),
     # Получаем все посты этих персон
     persona_ids = [p.id for p in personas]
     limit = 10
+    page = max(1, page)
     offset = (page - 1) * limit
-    hobbies = db.query(Hobby).filter(Hobby.persona_id.in_(persona_ids)).options(joinedload(Hobby.author_persona)).order_by(Hobby.created_at.desc()).offset(offset).limit(limit).all()
+    total = db.query(Hobby).filter(Hobby.persona_id.in_(persona_ids)).count()
+    total_pages = max(1, (total + limit - 1) // limit)
+    hobbies = db.query(Hobby).filter(Hobby.persona_id.in_(persona_ids)).options(joinedload(Hobby.author_persona), joinedload(Hobby.tags)).order_by(Hobby.created_at.desc()).offset(offset).limit(limit).all()
 
     return templates.TemplateResponse(
         "cabinet.html",
-        {"request": request, "user": current_user, "personas": personas, "hobbies": hobbies, "page": page}
+        {"request": request, "user": current_user, "personas": personas, "hobbies": hobbies, "page": page, "total_pages": total_pages}
     )
 
 @router.post("/cabinet/persona/create")
@@ -99,17 +101,13 @@ def confirm_delete_action(
     if not current_user:
         raise HTTPException(status_code=401)
 
-    code_key = f"code_{current_user.email}"
-    stored_code = auth_service.redis_client.get(code_key)
-
-    if not stored_code or not hmac.compare_digest(stored_code, code):
+    if not auth_service.verify_deletion_code(current_user.email, code):
         return RedirectResponse("/cabinet/delete/confirm?error=Неверный или просроченный код", status_code=status.HTTP_303_SEE_OTHER)
 
     # Soft delete
     current_user.deleted_at = datetime.now(timezone.utc)
     current_user.is_active = False
     db.commit()
-    auth_service.redis_client.delete(code_key)
 
     response = RedirectResponse("/?deleted=true", status_code=status.HTTP_303_SEE_OTHER)
     response.delete_cookie("access_token")
@@ -125,10 +123,13 @@ def public_profile(username: str, request: Request, page: int = 1, db: Session =
         raise HTTPException(status_code=404, detail="Профиль не найден")
 
     limit = 10
+    page = max(1, page)
     offset = (page - 1) * limit
-    hobbies = db.query(Hobby).filter(Hobby.persona_id == persona.id).order_by(Hobby.created_at.desc()).offset(offset).limit(limit).all()
+    total = db.query(Hobby).filter(Hobby.persona_id == persona.id).count()
+    total_pages = max(1, (total + limit - 1) // limit)
+    hobbies = db.query(Hobby).filter(Hobby.persona_id == persona.id).options(joinedload(Hobby.author_persona), joinedload(Hobby.tags)).order_by(Hobby.created_at.desc()).offset(offset).limit(limit).all()
 
     return templates.TemplateResponse(
         "profile.html",
-        {"request": request, "persona": persona, "hobbies": hobbies, "user": current_user, "page": page}
+        {"request": request, "persona": persona, "hobbies": hobbies, "user": current_user, "page": page, "total_pages": total_pages, "total_count": total}
     )

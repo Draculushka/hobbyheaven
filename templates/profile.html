@@ -51,7 +51,7 @@
 
             <div class="flex items-center justify-center md:justify-start">
                 <div class="text-center md:text-left">
-                    <span class="block text-3xl font-bold text-dark font-sans">{{ hobbies|length }}</span>
+                    <span class="block text-3xl font-bold text-dark font-sans">{{ total_count if total_count is defined else hobbies|length }}</span>
                     <span class="text-xs font-bold text-subtle uppercase tracking-wider font-sans">Публикаций</span>
                 </div>
             </div>

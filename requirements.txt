@@ -27,4 +27,3 @@ python-jose[cryptography]==3.3.0
 email-validator==2.1.1
 redis==5.0.2
 starlette-csrf==3.0.0
-slowapi==0.1.9

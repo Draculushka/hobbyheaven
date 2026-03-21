@@ -21,9 +21,11 @@ MAGIC_BYTES = {
 
 
 def _check_magic_bytes(content: bytes, ext: str) -> bool:
+    # .jpeg и .jpg — один формат
+    normalized = '.jpg' if ext == '.jpeg' else ext
     for magic, expected_ext in MAGIC_BYTES.items():
         if content.startswith(magic):
-            return True
+            return normalized == expected_ext
     return False
 
 
@@ -61,18 +63,20 @@ def delete_image(filename: str):
         path.unlink()
 
 
-def process_tags(db: Session, tags_input: str) -> list[Tag]:
+def process_tags(db: Session, tags_input: str, max_tags: int = 10) -> list[Tag]:
     if not tags_input:
         return []
 
-    tag_names = list(dict.fromkeys(name.strip() for name in tags_input.split(",") if name.strip()))
+    tag_names = list(dict.fromkeys(name.strip() for name in tags_input.split(",") if name.strip()))[:max_tags]
+    existing = {t.name: t for t in db.query(Tag).filter(Tag.name.in_(tag_names)).all()}
     tags = []
     for name in tag_names:
-        tag = db.query(Tag).filter(Tag.name == name).first()
-        if not tag:
+        if name in existing:
+            tags.append(existing[name])
+        else:
             tag = Tag(name=name)
             db.add(tag)
-        tags.append(tag)
+            tags.append(tag)
     return tags
 
 

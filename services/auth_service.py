@@ -34,7 +34,7 @@ def create_user(db: Session, username: str, email: str, password: str) -> User:
     return new_user
 
 def authenticate_user(db: Session, email: str, password: str) -> User | None:
-    user = get_user_by_email(db, email)
+    user = db.query(User).filter(User.email == email).first()
     if not user or not verify_password(password, user.hashed_password):
         return None
     return user
@@ -86,3 +86,13 @@ def verify_code(db: Session, email: str, code: str) -> bool:
         redis_client.incr(attempts_key)
         redis_client.expire(attempts_key, 600)
     return False
+
+
+def verify_deletion_code(email: str, code: str) -> bool:
+    """Проверяет код удаления аккаунта из Redis (без активации пользователя)."""
+    code_key = f"code_{email}"
+    stored_code = redis_client.get(code_key)
+    if not stored_code or not hmac.compare_digest(stored_code, code):
+        return False
+    redis_client.delete(code_key)
+    return True

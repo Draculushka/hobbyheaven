@@ -20,7 +20,7 @@ app.add_middleware(
     CSRFMiddleware,
     secret=SECRET_KEY,
     cookie_name="csrftoken",
-    cookie_secure=False,  # True в production с HTTPS
+    cookie_secure=os.getenv("COOKIE_SECURE", "false").lower() == "true",
     cookie_samesite="lax",
 )
 
