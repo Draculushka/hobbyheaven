@@ -46,7 +46,7 @@ def process_tags(db: Session, tags_input: str) -> list[Tag]:
     if not tags_input:
         return []
 
-    tag_names = [name.strip() for name in tags_input.split(",") if name.strip()]
+    tag_names = list(dict.fromkeys(name.strip() for name in tags_input.split(",") if name.strip()))
     tags = []
     for name in tag_names:
         tag = db.query(Tag).filter(Tag.name == name).first()
@@ -102,6 +102,8 @@ def search_hobbies(db: Session, search: str, page: int, limit: int):
     from models import Hobby, Persona, User
     from core.config import HOBBY_SYNONYMS
 
+    page = max(1, page)
+    limit = max(1, min(limit, 100))
     offset = (page - 1) * limit
     query = db.query(Hobby).join(Persona).join(User).filter(User.deleted_at.is_(None))
 

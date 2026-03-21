@@ -34,7 +34,10 @@ def create_user(db: Session, username: str, email: str, password: str) -> User:
     return new_user
 
 def authenticate_user(db: Session, email: str, password: str) -> User | None:
-    user = get_user_by_email(db, email)
+    user = db.query(User).filter(
+        User.email == email,
+        User.deleted_at.is_(None),
+    ).first()
     if not user or not verify_password(password, user.hashed_password):
         return None
     return user
