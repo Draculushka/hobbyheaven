@@ -21,7 +21,9 @@
             <a href="/" class="text-2xl font-bold text-[#E67E22] tracking-tighter">HobbyHeaven</a>
             <div class="flex items-center gap-6">
                 {% if user %}
-                <span class="text-sm font-medium text-[#7F8C8D]">Привет, <span class="text-[#2D3436] font-bold">{{ user.username }}</span></span>
+                {% set default_persona = user.personas | selectattr("is_default", "equalto", True) | first %}
+                {% set display_name = default_persona.username if default_persona else user.email.split('@')[0] %}
+                <span class="text-sm font-medium text-[#7F8C8D]">Привет, <span class="text-[#2D3436] font-bold">{{ display_name }}</span></span>
                 <a href="/logout" class="text-sm font-bold text-[#BDC3C7] hover:text-[#C0392B] transition-colors">Выйти</a>
                 {% else %}
                 <a href="/login" class="text-sm font-bold text-[#7F8C8D] hover:text-[#E67E22] transition-colors">Войти</a>

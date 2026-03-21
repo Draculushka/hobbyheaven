@@ -11,6 +11,7 @@ TEMPLATES_DIR = BASE_DIR / "templates"
 SECRET_KEY = os.getenv("SECRET_KEY", "your-secret-key")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
 # --- Search Mapping ---
 HOBBY_SYNONYMS = {

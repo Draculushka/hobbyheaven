@@ -108,7 +108,13 @@
             <div class="flex items-center gap-2">
                 <button class="p-2 text-[#BDC3C7] hover:text-[#FF9F43] relative transition-colors" title="Уведомления"><svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg><span class="absolute top-2 right-2 w-2 h-2 bg-[#FF9F43] rounded-full border-2 border-white"></span></button>
                 <div class="h-6 w-[1px] bg-[#F1F2F6] mx-2"></div>
-                {% if user %}<div class="flex items-center gap-3"><div class="w-8 h-8 bg-[#FF9F43] rounded-lg flex items-center justify-center text-white font-bold text-xs shadow-md">{{ user.username[0].upper() }}</div><a href="/logout" class="text-[10px] font-bold text-[#BDC3C7] hover:text-[#C0392B] uppercase tracking-widest transition-colors">Выход</a></div>
+                {% if user %}
+                {% set default_persona = user.personas | selectattr("is_default", "equalto", True) | first %}
+                {% set display_name = default_persona.username if default_persona else user.email.split('@')[0] %}
+                <div class="flex items-center gap-3">
+                    <a href="/cabinet" class="w-8 h-8 bg-[#FF9F43] rounded-lg flex items-center justify-center text-white font-bold text-xs shadow-md hover:scale-110 transition-transform" title="Личный кабинет">{{ display_name[0].upper() }}</a>
+                    <a href="/logout" class="text-[10px] font-bold text-[#BDC3C7] hover:text-[#C0392B] uppercase tracking-widest transition-colors">Выход</a>
+                </div>
                 {% else %}<a href="/login" class="text-xs font-bold text-[#7F8C8D] hover:text-[#FF9F43] px-2">Войти</a><a href="/register" class="bg-[#FF9F43] text-white text-[10px] font-bold px-4 py-2 rounded-lg hover:bg-[#EE5253] transition-all uppercase tracking-wider">Регистрация</a>{% endif %}
             </div>
         </div>
@@ -125,6 +131,14 @@
         {% if user %}
         <div class="mb-16 bg-white rounded-[48px] border border-[#F1F2F6] p-8 shadow-sm">
             <form action="/create-hobby" method="post" enctype="multipart/form-data" class="space-y-6">
+                <div class="flex items-center gap-4 mb-4">
+                    <select name="persona_id" class="bg-[#F8F9FA] text-[#2D3436] text-sm font-bold px-4 py-2 rounded-xl border-none outline-none focus:ring-2 focus:ring-[#FF9F43]">
+                        {% for persona in user.personas %}
+                        <option value="{{ persona.id }}">{{ persona.username }}</option>
+                        {% endfor %}
+                    </select>
+                    <span class="text-xs font-bold text-[#BDC3C7] uppercase tracking-wider">От чьего имени пишем?</span>
+                </div>
                 <input type="text" name="title" placeholder="Название твоего хобби" class="w-full text-2xl font-bold border-none focus:ring-0 placeholder-[#BDC3C7]" required>
                 <textarea id="editor" name="description"></textarea>
                 
@@ -154,7 +168,18 @@
                     <div class="p-10 md:p-14 md:w-7/12 flex flex-col justify-between">
                         <div>
                             <div class="flex justify-between items-center mb-8"><span class="px-4 py-1.5 bg-orange-50 text-[#FF9F43] rounded-full text-[10px] font-bold uppercase tracking-widest">{{ hobby.title }}</span><time class="text-[#BDC3C7] text-[10px] font-bold">{{ hobby.created_at.strftime('%d.%m.%Y') }}</time></div>
-                            <h3 class="text-3xl font-bold mb-6 text-[#2D3436]">{{ hobby.author_user.username if hobby.author_user else hobby.author }}</h3>
+                            <div class="flex items-center gap-3 mb-6">
+                                <a href="/profile/{{ hobby.author_persona.username }}" class="flex-shrink-0 group/avatar">
+                                    {% if hobby.author_persona.avatar_path %}
+                                    <img src="/uploads/{{ hobby.author_persona.avatar_path }}" class="w-10 h-10 rounded-full object-cover border border-[#F1F2F6] group-hover/avatar:border-[#FF9F43] transition-colors">
+                                    {% else %}
+                                    <div class="w-10 h-10 bg-[#FF9F43] rounded-full flex items-center justify-center text-white font-bold text-sm shadow-sm group-hover/avatar:scale-110 transition-transform">{{ hobby.author_persona.username[0].upper() }}</div>
+                                    {% endif %}
+                                </a>
+                                <a href="/profile/{{ hobby.author_persona.username }}" class="text-2xl font-bold text-[#2D3436] hover:text-[#FF9F43] transition-colors">
+                                    {{ hobby.author_persona.username }}
+                                </a>
+                            </div>
                             <div class="text-[#7F8C8D] font-serif text-lg italic line-clamp-4">{{ hobby.description | safe }}</div>
                         </div>
                     </div>

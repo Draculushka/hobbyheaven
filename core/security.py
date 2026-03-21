@@ -29,10 +29,10 @@ async def get_current_user(request: Request, db: Session = Depends(get_db)) -> U
         if token.startswith("Bearer "):
             token = token.split(" ")[1]
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        if username is None:
+        email: str = payload.get("sub")
+        if email is None:
             return None
     except JWTError:
         return None
-    user = db.query(User).filter(User.username == username).first()
+    user = db.query(User).filter(User.email == email).first()
     return user

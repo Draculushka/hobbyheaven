@@ -18,11 +18,22 @@ services:
     build: .
     container_name: hobby_web
     env_file: .env
+    environment:
+      - REDIS_URL=redis://redis:6379/0
     depends_on:
       - db
+      - redis
     volumes:
       - .:/app
       - ./data/uploads:/app/uploads
+    networks:
+      - hobby_network
+    restart: always
+
+  # Redis для кэширования и кулдаунов
+  redis:
+    image: redis:alpine
+    container_name: hobby_redis
     networks:
       - hobby_network
     restart: always

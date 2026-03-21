@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Удаление аккаунта — HobbyHeaven</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Lora:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #FDFCF0; }
+        h1, .font-serif { font-family: 'Lora', serif; }
+    </style>
+</head>
+<body class="text-[#2D3436] antialiased flex items-center justify-center min-h-screen">
+    <div class="bg-white p-10 md:p-12 rounded-[48px] shadow-sm border border-[#F1F2F6] max-w-md w-full mx-4">
+        <div class="text-center mb-10">
+            <h1 class="text-3xl font-bold mb-4 text-[#C0392B]">Заморозка аккаунта</h1>
+            <p class="text-[#7F8C8D]">Ваш аккаунт и все альтер-эго будут скрыты на 30 дней, а затем удалены навсегда.</p>
+            <p class="text-[#7F8C8D] mt-2 font-bold text-sm">Мы отправили код подтверждения на {{ email }}.</p>
+        </div>
+        
+        {% if error %}
+        <div class="bg-red-50 text-red-500 p-4 rounded-2xl mb-6 text-sm font-medium text-center">
+            {{ error }}
+        </div>
+        {% endif %}
+
+        <form action="/cabinet/delete/confirm" method="post" class="space-y-6">
+            <div>
+                <label class="block text-sm font-bold text-[#C0392B] mb-2 uppercase tracking-wider">Код подтверждения</label>
+                <input type="text" name="code" class="w-full bg-[#F8F9FA] border-none rounded-2xl px-6 py-4 text-center text-2xl tracking-[0.5em] font-bold focus:ring-2 focus:ring-[#C0392B] outline-none transition-all" required maxlength="6" autocomplete="off" placeholder="------">
+            </div>
+            
+            <div class="flex gap-4 mt-6">
+                <a href="/cabinet" class="flex-1 text-center bg-[#F8F9FA] text-[#7F8C8D] px-6 py-4 rounded-2xl font-bold transition-all hover:bg-gray-100">
+                    Отмена
+                </a>
+                <button type="submit" class="flex-1 bg-[#C0392B] hover:bg-red-700 text-white px-6 py-4 rounded-2xl font-bold transition-all shadow-lg hover:shadow-red-200">
+                    Удалить
+                </button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

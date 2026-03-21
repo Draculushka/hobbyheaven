@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Form, Request, status, Response
+from fastapi import APIRouter, Depends, Form, Request, status, Response, BackgroundTasks
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
@@ -12,24 +12,54 @@ from core.config import TEMPLATES_DIR
 router = APIRouter()
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
 
+def send_mock_email(email: str, code: str):
+    print(f"\n{'='*40}\n[MOCK EMAIL] To: {email}\n[MOCK EMAIL] Verification Code: {code}\n{'='*40}\n")
+
 @router.get("/register")
 def register_page(request: Request):
     return templates.TemplateResponse("register.html", {"request": request})
 
 @router.post("/register")
 def register_user(
+    background_tasks: BackgroundTasks,
     username: str = Form(...), 
     email: str = Form(...), 
-    password: str = Form(...), 
+    password: str = Form(..., min_length=6, max_length=64), 
     db: Session = Depends(get_db)
 ):
-    if auth_service.get_user_by_username(db, username):
-        # В идеале тут нужно вернуть страницу с ошибкой, но пока сохраним логику оригинала
+    if auth_service.get_persona_by_username(db, username):
         from fastapi import HTTPException
-        raise HTTPException(status_code=400, detail="Username already registered")
+        raise HTTPException(status_code=400, detail="Username already taken by another persona")
+    if auth_service.get_user_by_email(db, email):
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail="Email already registered")
     
     auth_service.create_user(db, username, email, password)
-    return RedirectResponse("/login", status_code=status.HTTP_303_SEE_OTHER)
+    code = auth_service.request_verification_code(email)
+    
+    if code:
+        background_tasks.add_task(send_mock_email, email, code)
+
+    return RedirectResponse(f"/verify-email?email={email}", status_code=status.HTTP_303_SEE_OTHER)
+
+@router.get("/verify-email")
+def verify_email_page(request: Request, email: str, error: Optional[str] = None):
+    return templates.TemplateResponse("verify.html", {"request": request, "email": email, "error": error})
+
+@router.post("/verify-email")
+def verify_email(
+    email: str = Form(...),
+    code: str = Form(...),
+    db: Session = Depends(get_db)
+):
+    success = auth_service.verify_code(db, email, code)
+    if not success:
+        return RedirectResponse(f"/verify-email?email={email}&error=Неверный или просроченный код", status_code=status.HTTP_303_SEE_OTHER)
+    
+    access_token = create_access_token(data={"sub": email})
+    response = RedirectResponse("/", status_code=status.HTTP_303_SEE_OTHER)
+    response.set_cookie(key="access_token", value=f"Bearer {access_token}", httponly=True)
+    return response
 
 @router.get("/login")
 def login_page(request: Request, error: Optional[str] = None):
@@ -37,15 +67,21 @@ def login_page(request: Request, error: Optional[str] = None):
 
 @router.post("/login")
 def login(
-    username: str = Form(...), 
+    email: str = Form(...), 
     password: str = Form(...), 
     db: Session = Depends(get_db)
 ):
-    user = auth_service.authenticate_user(db, username, password)
+    user = auth_service.authenticate_user(db, email, password)
     if not user:
         return RedirectResponse("/login?error=Invalid credentials", status_code=status.HTTP_303_SEE_OTHER)
+        
+    if user.deleted_at:
+        return RedirectResponse("/login?error=Ваш аккаунт в процессе удаления. Обратитесь в поддержку для восстановления.", status_code=status.HTTP_303_SEE_OTHER)
     
-    access_token = create_access_token(data={"sub": user.username})
+    if not user.is_active:
+        return RedirectResponse(f"/verify-email?email={user.email}&error=Активируйте аккаунт перед входом", status_code=status.HTTP_303_SEE_OTHER)
+    
+    access_token = create_access_token(data={"sub": user.email})
     response = RedirectResponse("/", status_code=status.HTTP_303_SEE_OTHER)
     response.set_cookie(key="access_token", value=f"Bearer {access_token}", httponly=True)
     return response

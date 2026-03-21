@@ -5,7 +5,7 @@ import os
 from database import engine
 from models import Base
 from core.config import UPLOAD_DIR
-from api.endpoints import auth, hobbies
+from api.endpoints import auth, hobbies, profile
 
 # Убедимся, что папка для загрузок существует
 os.makedirs(UPLOAD_DIR, exist_ok=True)
@@ -20,3 +20,4 @@ app.mount("/uploads", StaticFiles(directory=str(UPLOAD_DIR)), name="uploads")
 # Подключение роутеров
 app.include_router(auth.router, tags=["auth"])
 app.include_router(hobbies.router, tags=["hobbies"])
+app.include_router(profile.router, tags=["profile"])

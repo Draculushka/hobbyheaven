@@ -45,13 +45,12 @@ def process_tags(db: Session, tags_input: str) -> List[Tag]:
         tags.append(tag)
     return tags
 
-def create_hobby(db: Session, user: User, title: str, description: str, tags_input: str, image) -> Hobby:
+def create_hobby(db: Session, persona_id: int, title: str, description: str, tags_input: str, image) -> Hobby:
     image_filename = save_upload_image(image)
     clean_description = sanitize_description(description)
     
     hobby = Hobby(
-        author=user.username,
-        author_id=user.id,
+        persona_id=persona_id,
         title=title,
         description=clean_description,
         image_path=image_filename,

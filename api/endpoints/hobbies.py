@@ -6,7 +6,7 @@ from sqlalchemy import or_, func
 from typing import Optional
 
 from database import get_db
-from models import Hobby, User
+from models import Hobby, User, Persona
 from services import hobby_service
 from core.security import get_current_user
 from core.config import TEMPLATES_DIR, HOBBY_SYNONYMS
@@ -25,7 +25,9 @@ async def home(
     limit = 10
     offset = (page - 1) * limit
     
-    query = db.query(Hobby)
+    # Исключаем посты удаленных пользователей
+    query = db.query(Hobby).join(Persona).join(User).filter(User.deleted_at.is_(None))
+    
     if search:
         search_lower = search.lower().strip()
         search_terms = HOBBY_SYNONYMS.get(search_lower, [search_lower])
@@ -53,6 +55,7 @@ async def create_hobby(
     title: str = Form(...),
     description: str = Form(...),
     tags_input: str = Form(""),
+    persona_id: Optional[int] = Form(None),
     image: UploadFile = File(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -60,7 +63,21 @@ async def create_hobby(
     if not current_user:
         return RedirectResponse("/login", status_code=status.HTTP_303_SEE_OTHER)
 
-    hobby_service.create_hobby(db, current_user, title, description, tags_input, image)
+    # Если persona_id не передана, используем дефолтную персону пользователя
+    if not persona_id:
+        persona = db.query(Persona).filter(Persona.user_id == current_user.id, Persona.is_default == True).first()
+        if not persona:
+            persona = db.query(Persona).filter(Persona.user_id == current_user.id).first()
+        if not persona:
+            raise HTTPException(status_code=400, detail="No persona found for user")
+        persona_id = persona.id
+    else:
+        # Проверяем, что выбранная персона принадлежит текущему юзеру
+        persona = db.query(Persona).filter(Persona.id == persona_id, Persona.user_id == current_user.id).first()
+        if not persona:
+            raise HTTPException(status_code=403, detail="Invalid persona")
+
+    hobby_service.create_hobby(db, persona_id, title, description, tags_input, image)
     return RedirectResponse("/", status_code=status.HTTP_303_SEE_OTHER)
 
 @router.get("/edit/{hobby_id}")
@@ -77,7 +94,8 @@ def edit_hobby_page(
     if not hobby:
         raise HTTPException(status_code=404, detail="Hobby not found")
     
-    if hobby.author_id != current_user.id:
+    # Проверяем, принадлежит ли хобби одной из персон юзера
+    if hobby.author_persona.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized to edit this hobby")
 
     tags_str = ", ".join([t.name for t in hobby.tags])
@@ -100,7 +118,7 @@ def update_hobby(
         return RedirectResponse("/login", status_code=status.HTTP_303_SEE_OTHER)
 
     hobby = db.query(Hobby).filter(Hobby.id == hobby_id).first()
-    if not hobby or hobby.author_id != current_user.id:
+    if not hobby or hobby.author_persona.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized")
     
     hobby_service.update_hobby(db, hobby, title, description, tags_input, image)
@@ -119,7 +137,7 @@ def delete_hobby(
     if not hobby:
         raise HTTPException(status_code=404, detail="Hobby not found")
         
-    if hobby.author_id == current_user.id or current_user.is_admin:
+    if hobby.author_persona.user_id == current_user.id or current_user.is_admin:
         hobby_service.delete_hobby(db, hobby)
         return RedirectResponse("/", status_code=status.HTTP_303_SEE_OTHER)
     

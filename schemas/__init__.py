@@ -1,17 +1,36 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from datetime import datetime
 from typing import List, Optional
 
+# --- Persona Schemas ---
+class PersonaBase(BaseModel):
+    username: str
+    bio: Optional[str] = None
+    avatar_path: Optional[str] = None
+
+class PersonaCreate(PersonaBase):
+    pass
+
+class Persona(PersonaBase):
+    id: int
+    user_id: int
+    is_default: bool
+
+    class Config:
+        from_attributes = True
+
 # --- User Schemas ---
 class UserBase(BaseModel):
-    username: str
     email: EmailStr
 
 class UserCreate(UserBase):
-    password: str
+    username: str # Имя для первой (дефолтной) персоны
+    password: str = Field(..., min_length=6, max_length=64)
 
 class User(UserBase):
     id: int
+    is_active: bool
+    personas: List[Persona] = []
 
     class Config:
         from_attributes = True
@@ -22,7 +41,7 @@ class Token(BaseModel):
     token_type: str
 
 class TokenData(BaseModel):
-    username: Optional[str] = None
+    email: Optional[str] = None
 
 # --- Tag Schemas ---
 class TagBase(BaseModel):
@@ -41,20 +60,21 @@ class Tag(TagBase):
 class HobbyBase(BaseModel):
     title: str
     description: Optional[str] = None
-    author: Optional[str] = None
     image_path: Optional[str] = None
 
 class HobbyCreate(HobbyBase):
-    tags: List[str] = [] # Имена тегов
+    tags: List[str] = []
+    persona_id: int # Обязательно указываем, от чьего имени постим
 
 class HobbyUpdate(HobbyBase):
     tags: List[str] = []
 
 class Hobby(HobbyBase):
     id: int
-    author_id: Optional[int] = None
+    persona_id: int
     created_at: datetime
     tags: List[Tag] = []
+    author_persona: Optional[Persona] = None
 
     class Config:
         from_attributes = True
