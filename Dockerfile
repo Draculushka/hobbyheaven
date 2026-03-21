@@ -20,5 +20,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Теперь копируем остальной код проекта
 COPY . .
 
+# Создаём непривилегированного пользователя
+RUN adduser --disabled-password --no-create-home appuser
+USER appuser
+
 # Команда для запуска (uvicorn)
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-c", "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8000 --workers 4"]

@@ -1,21 +1,13 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import os
+from dotenv import load_dotenv
 
-# В Docker окружение передается через env_file или environment,
-# поэтому load_dotenv() здесь не обязателен, если запуск идет в контейнере.
-# Но мы оставим его для совместимости, если он найдет файл.
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
-    pass
+load_dotenv()
 
-DATABASE_URL = os.getenv("DATABASE_URL")
-
-# Если DATABASE_URL все еще не задан, используем дефолт (только для локальных тестов)
+DATABASE_URL = os.environ.get("DATABASE_URL")
 if not DATABASE_URL:
-    DATABASE_URL = "postgresql://draculushka:secure_password@db/hobbyheaven"
+    raise RuntimeError("DATABASE_URL environment variable is required")
 
 engine = create_engine(DATABASE_URL)
 

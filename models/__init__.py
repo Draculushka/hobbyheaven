@@ -19,10 +19,10 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
-    is_admin = Column(Integer, default=0) 
+    is_admin = Column(Boolean, default=False)
     is_active = Column(Boolean, default=False)
     deleted_at = Column(DateTime, nullable=True) # Для мягкого удаления (холд 30 дней)
-    
+
     # Связь с альтер-эго (персонами)
     personas = relationship("Persona", back_populates="user", cascade="all, delete-orphan")
 
@@ -31,12 +31,12 @@ class Persona(Base):
     __tablename__ = "personas"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False, index=True)
     username = Column(String, unique=True, index=True, nullable=False) # Уникальное имя на всю платформу
     bio = Column(Text, nullable=True)
     avatar_path = Column(String, nullable=True)
     is_default = Column(Boolean, default=False) # Флаг основной персоны
-    
+
     # Обратная связь с аккаунтом
     user = relationship("User", back_populates="personas")
     # Связь с хобби (постами)
@@ -47,15 +47,15 @@ class Hobby(Base):
     __tablename__ = "hobbies"
 
     id = Column(Integer, primary_key=True, index=True)
-    title = Column(String, nullable=False)
+    title = Column(String(255), nullable=False)
     description = Column(Text)
-    persona_id = Column(Integer, ForeignKey("personas.id"), nullable=False)
+    persona_id = Column(Integer, ForeignKey("personas.id"), nullable=False, index=True)
     image_path = Column(String)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     # Связь с автором-персоной
     author_persona = relationship("Persona", back_populates="hobbies")
-    
+
     # Связь с тегами
     tags = relationship("Tag", secondary=hobby_tags, back_populates="hobbies")
 

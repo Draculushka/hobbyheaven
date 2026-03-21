@@ -1,6 +1,7 @@
-from pydantic import BaseModel, EmailStr, Field
+# TODO: integrate these schemas with API endpoints as response_model
+from pydantic import BaseModel, EmailStr, Field, ConfigDict
 from datetime import datetime
-from typing import List, Optional
+from typing import Optional
 
 # --- Persona Schemas ---
 class PersonaBase(BaseModel):
@@ -16,8 +17,7 @@ class Persona(PersonaBase):
     user_id: int
     is_default: bool
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 # --- User Schemas ---
 class UserBase(BaseModel):
@@ -30,10 +30,9 @@ class UserCreate(UserBase):
 class User(UserBase):
     id: int
     is_active: bool
-    personas: List[Persona] = []
+    personas: list[Persona] = []
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 # --- Token Schemas ---
 class Token(BaseModel):
@@ -53,8 +52,7 @@ class TagCreate(TagBase):
 class Tag(TagBase):
     id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 # --- Hobby Schemas ---
 class HobbyBase(BaseModel):
@@ -63,18 +61,17 @@ class HobbyBase(BaseModel):
     image_path: Optional[str] = None
 
 class HobbyCreate(HobbyBase):
-    tags: List[str] = []
+    tags: list[str] = []
     persona_id: int # Обязательно указываем, от чьего имени постим
 
 class HobbyUpdate(HobbyBase):
-    tags: List[str] = []
+    tags: list[str] = []
 
 class Hobby(HobbyBase):
     id: int
     persona_id: int
     created_at: datetime
-    tags: List[Tag] = []
+    tags: list[Tag] = []
     author_persona: Optional[Persona] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

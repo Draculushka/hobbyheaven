@@ -19,9 +19,11 @@ typing_extensions==4.15.0
 uvicorn==0.41.0
 alembic==1.14.1
 python-dotenv==1.0.1
-bleach
-passlib[bcrypt]
+nh3==0.2.18
+passlib[bcrypt]==1.7.4
 bcrypt==4.0.1
-python-jose[cryptography]
-email-validator
+python-jose[cryptography]==3.3.0
+email-validator==2.1.1
 redis==5.0.2
+starlette-csrf==3.0.0
+slowapi==0.1.9

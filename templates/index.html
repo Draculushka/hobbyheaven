@@ -91,6 +91,9 @@
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                 </div>
             </form>
+            <button onclick="document.getElementById('tags-panel').classList.toggle('open')" class="p-2 text-muted hover:text-primary hover:bg-orange-50 rounded-lg transition-all" title="Категории" aria-label="Показать категории">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 11h.01M7 15h.01M13 7h.01M13 11h.01M13 15h.01M17 7h.01M17 11h.01M17 15h.01"/></svg>
+            </button>
             <a href="/random" class="surprise-btn p-2 text-muted hover:bg-orange-50 rounded-lg transition-all flex items-center justify-center" aria-label="Случайное хобби">
                 <div class="dice-scene"><div class="cube"><div class="cube__face cube__face--1"><div class="pip"></div></div><div class="cube__face cube__face--6"><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div><div class="cube__face cube__face--3"><div class="pip"></div><div class="pip"></div><div class="pip"></div></div><div class="cube__face cube__face--4"><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div><div class="cube__face cube__face--2"><div class="pip"></div><div class="pip"></div></div><div class="cube__face cube__face--5"><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div></div></div></div>
             </a>
@@ -137,6 +140,7 @@
             <input id="hobby-title" type="text" name="title" placeholder="Название твоего хобби" class="w-full text-2xl font-bold border-none focus:ring-0 placeholder-subtle" required>
             <label for="editor" class="sr-only">Описание</label>
             <textarea id="editor" name="description"></textarea>
+            <!-- TODO: add CSRF token field -->
 
             <div class="flex flex-wrap gap-4 items-center justify-between pt-4">
                 <div class="flex flex-wrap gap-4">
@@ -162,19 +166,20 @@
         {% for hobby in hobbies %}
         <article class="post-card bg-white rounded-card-lg border border-border overflow-hidden group">
             <div class="flex flex-col md:flex-row {{ 'md:flex-row-reverse' if loop.index0 % 2 == 1 }}">
-                <div class="md:w-5/12 relative overflow-hidden aspect-[4/3] md:aspect-auto">
-                    {% if hobby.image_path %}
+                {% if hobby.image_path %}
+                <div class="md:w-5/12 relative overflow-hidden aspect-[4/3] md:aspect-[3/4]">
                     <img src="/uploads/{{ hobby.image_path }}" alt="{{ hobby.title }}" loading="lazy"
                          class="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 cursor-pointer"
                          onclick="openImage(this.src)">
-                    {% endif %}
                 </div>
-                <div class="p-8 md:p-14 md:w-7/12 flex flex-col justify-between">
+                {% endif %}
+                <div class="p-8 md:p-14 {{ 'md:w-7/12' if hobby.image_path else 'w-full' }} flex flex-col justify-between">
                     <div>
                         <div class="flex justify-between items-center mb-8">
-                            <h2 class="px-4 py-1.5 bg-orange-50 text-primary rounded-full text-[10px] font-bold uppercase tracking-widest font-sans">{{ hobby.title }}</h2>
+                            <span class="px-4 py-1.5 bg-orange-50 text-primary rounded-full text-[10px] font-bold uppercase tracking-widest font-sans">{{ hobby.title }}</span>
                             <time class="text-subtle text-[10px] font-bold font-sans" datetime="{{ hobby.created_at.isoformat() }}">{{ hobby.created_at.strftime('%d.%m.%Y') }}</time>
                         </div>
+                        <h3 class="text-xl font-bold text-dark mb-4 font-sans">{{ hobby.title }}</h3>
                         <div class="flex items-center gap-3 mb-6">
                             <a href="/profile/{{ hobby.author_persona.username }}" class="flex-shrink-0 group/avatar" aria-label="Профиль {{ hobby.author_persona.username }}">
                                 {% if hobby.author_persona.avatar_path %}

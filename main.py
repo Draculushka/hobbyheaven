@@ -1,9 +1,10 @@
+import logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s %(name)s %(levelname)s %(message)s')
+
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 import os
 
-from database import engine
-from models import Base
 from core.config import UPLOAD_DIR
 from api.endpoints import auth, hobbies, profile
 

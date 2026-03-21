@@ -1,3 +1,4 @@
+import hmac
 from fastapi import APIRouter, Depends, Form, Request, status, UploadFile, File, HTTPException, BackgroundTasks
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
@@ -10,7 +11,7 @@ from core.security import get_current_user
 from core.templates import templates
 from services.hobby_service import save_upload_image
 from services import auth_service
-from api.endpoints.auth import send_mock_email
+from services.notification_service import send_mock_email
 
 router = APIRouter()
 
@@ -18,13 +19,13 @@ router = APIRouter()
 async def cabinet_page(request: Request, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     if not current_user:
         return RedirectResponse("/login", status_code=status.HTTP_303_SEE_OTHER)
-    
+
     # Получаем все персоны пользователя
     personas = db.query(Persona).filter(Persona.user_id == current_user.id).all()
     # Получаем все посты этих персон
     persona_ids = [p.id for p in personas]
     hobbies = db.query(Hobby).filter(Hobby.persona_id.in_(persona_ids)).order_by(Hobby.created_at.desc()).all()
-    
+
     return templates.TemplateResponse(
         "cabinet.html",
         {"request": request, "user": current_user, "personas": personas, "hobbies": hobbies}
@@ -40,21 +41,21 @@ async def create_persona(
 ):
     if not current_user:
         raise HTTPException(status_code=401)
-        
+
     # Проверяем лимит персон (максимум 3)
     persona_count = db.query(Persona).filter(Persona.user_id == current_user.id).count()
     if persona_count >= 3:
         raise HTTPException(status_code=400, detail="Достигнут лимит: максимум 3 альтер-эго на аккаунт")
-        
+
     # Проверяем уникальность
     existing = db.query(Persona).filter(Persona.username == username).first()
     if existing:
         raise HTTPException(status_code=400, detail="Имя уже занято")
-        
+
     avatar_path = None
     if avatar and avatar.filename:
         avatar_path = save_upload_image(avatar)
-        
+
     new_persona = Persona(
         user_id=current_user.id,
         username=username,
@@ -64,7 +65,7 @@ async def create_persona(
     )
     db.add(new_persona)
     db.commit()
-    
+
     return RedirectResponse("/cabinet", status_code=status.HTTP_303_SEE_OTHER)
 
 @router.post("/cabinet/delete")
@@ -74,11 +75,11 @@ async def request_delete_account(
 ):
     if not current_user:
         raise HTTPException(status_code=401)
-        
+
     code = auth_service.request_verification_code(current_user.email)
     if code:
         background_tasks.add_task(send_mock_email, current_user.email, code)
-        
+
     return RedirectResponse("/cabinet/delete/confirm", status_code=status.HTTP_303_SEE_OTHER)
 
 @router.get("/cabinet/delete/confirm")
@@ -95,19 +96,19 @@ async def confirm_delete_action(
 ):
     if not current_user:
         raise HTTPException(status_code=401)
-        
+
     code_key = f"code_{current_user.email}"
     stored_code = auth_service.redis_client.get(code_key)
-    
-    if not stored_code or stored_code != code:
+
+    if not stored_code or not hmac.compare_digest(stored_code, code):
         return RedirectResponse("/cabinet/delete/confirm?error=Неверный или просроченный код", status_code=status.HTTP_303_SEE_OTHER)
-        
+
     # Soft delete
     current_user.deleted_at = datetime.now(timezone.utc)
     current_user.is_active = False
     db.commit()
     auth_service.redis_client.delete(code_key)
-    
+
     response = RedirectResponse("/?deleted=true", status_code=status.HTTP_303_SEE_OTHER)
     response.delete_cookie("access_token")
     return response
@@ -117,9 +118,9 @@ async def public_profile(username: str, request: Request, db: Session = Depends(
     persona = db.query(Persona).filter(Persona.username == username).first()
     if not persona:
         raise HTTPException(status_code=404, detail="Профиль не найден")
-    
+
     hobbies = db.query(Hobby).filter(Hobby.persona_id == persona.id).order_by(Hobby.created_at.desc()).all()
-    
+
     return templates.TemplateResponse(
         "profile.html",
         {"request": request, "persona": persona, "hobbies": hobbies, "user": current_user}

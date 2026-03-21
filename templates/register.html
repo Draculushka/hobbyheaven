@@ -11,6 +11,13 @@
         <p class="text-muted font-serif italic">Создайте свой уголок в Раю</p>
     </div>
 
+    {% if error %}
+    <div class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 text-sm rounded-r-xl" role="alert">
+        <p class="font-bold">Ошибка!</p>
+        <p>{{ error }}</p>
+    </div>
+    {% endif %}
+
     <form action="/register" method="post" class="space-y-6">
         <div class="space-y-2">
             <label for="reg-username" class="text-sm font-semibold uppercase tracking-wider text-muted-light ml-1">Имя профиля (Псевдоним)</label>

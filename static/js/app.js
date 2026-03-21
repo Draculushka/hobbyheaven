@@ -30,6 +30,15 @@ function closeImageModal() {
     }
 }
 
+function toggleSidebar() {
+    var content = document.getElementById('sidebar-content');
+    var btn = document.getElementById('toggle-sidebar');
+    if (content && btn) {
+        content.classList.toggle('hidden');
+        btn.setAttribute('aria-expanded', content.classList.contains('hidden') ? 'false' : 'true');
+    }
+}
+
 document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') {
         closeImageModal();
