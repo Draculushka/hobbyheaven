@@ -1,20 +1,20 @@
 from fastapi import APIRouter, Depends, Form, Request, status, UploadFile, File, HTTPException
 from fastapi.responses import RedirectResponse
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from typing import Optional
-from urllib.parse import quote
 
 from database import get_db
-from models import Hobby, Persona, User
+from models import Hobby, Persona
 from services import hobby_service
 from core.security import get_current_user
 from core.templates import templates
+from models import User
 
 router = APIRouter()
 
 
 @router.get("/")
-async def home(
+def home(
     request: Request,
     page: int = 1,
     search: str = "",
@@ -38,10 +38,10 @@ def get_random_hobby(db: Session = Depends(get_db)):
 
 
 @router.post("/create-hobby")
-async def create_hobby(
-    title: str = Form(...),
-    description: str = Form(...),
-    tags_input: str = Form(""),
+def create_hobby(
+    title: str = Form(..., max_length=255),
+    description: str = Form(..., max_length=50000),
+    tags_input: str = Form("", max_length=500),
     persona_id: Optional[int] = Form(None),
     image: UploadFile = File(None),
     db: Session = Depends(get_db),
@@ -78,7 +78,7 @@ def edit_hobby_page(
     if not current_user:
         return RedirectResponse("/login", status_code=status.HTTP_303_SEE_OTHER)
 
-    hobby = db.query(Hobby).filter(Hobby.id == hobby_id).first()
+    hobby = db.query(Hobby).options(joinedload(Hobby.author_persona)).filter(Hobby.id == hobby_id).first()
     if not hobby:
         raise HTTPException(status_code=404, detail="Hobby not found")
 
@@ -96,9 +96,9 @@ def edit_hobby_page(
 @router.post("/update/{hobby_id}")
 def update_hobby(
     hobby_id: int,
-    title: str = Form(...),
-    description: str = Form(...),
-    tags_input: str = Form(""),
+    title: str = Form(..., max_length=255),
+    description: str = Form(..., max_length=50000),
+    tags_input: str = Form("", max_length=500),
     image: UploadFile = File(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -106,7 +106,7 @@ def update_hobby(
     if not current_user:
         return RedirectResponse("/login", status_code=status.HTTP_303_SEE_OTHER)
 
-    hobby = db.query(Hobby).filter(Hobby.id == hobby_id).first()
+    hobby = db.query(Hobby).options(joinedload(Hobby.author_persona)).filter(Hobby.id == hobby_id).first()
     if not hobby or hobby.author_persona.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not authorized")
 
@@ -123,7 +123,7 @@ def delete_hobby(
     if not current_user:
         raise HTTPException(status_code=401, detail="Not authenticated")
 
-    hobby = db.query(Hobby).filter(Hobby.id == hobby_id).first()
+    hobby = db.query(Hobby).options(joinedload(Hobby.author_persona)).filter(Hobby.id == hobby_id).first()
     if not hobby:
         raise HTTPException(status_code=404, detail="Hobby not found")
 

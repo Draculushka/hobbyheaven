@@ -4,6 +4,7 @@ from fastapi.templating import Jinja2Templates
 from core.config import TEMPLATES_DIR, ALLOWED_TAGS, ALLOWED_ATTRS, ALLOWED_PROTOCOLS
 
 templates = Jinja2Templates(directory=str(TEMPLATES_DIR))
+templates.env.autoescape = True
 
 
 def sanitize_html(value: str) -> str:

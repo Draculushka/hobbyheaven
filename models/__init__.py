@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Table, Boolean
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, Table, Boolean, Index
 from sqlalchemy.orm import declarative_base, relationship
 from datetime import datetime, timezone
 
@@ -11,6 +11,8 @@ hobby_tags = Table(
     Column("hobby_id", Integer, ForeignKey("hobbies.id"), primary_key=True),
     Column("tag_id", Integer, ForeignKey("tags.id"), primary_key=True),
 )
+
+Index('ix_hobby_tags_tag_id', hobby_tags.c.tag_id)
 
 class User(Base):
     """Мастер-аккаунт пользователя, используется только для авторизации и системных настроек."""
@@ -51,7 +53,7 @@ class Hobby(Base):
     description = Column(Text)
     persona_id = Column(Integer, ForeignKey("personas.id"), nullable=False, index=True)
     image_path = Column(String)
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)
 
     # Связь с автором-персоной
     author_persona = relationship("Persona", back_populates="hobbies")

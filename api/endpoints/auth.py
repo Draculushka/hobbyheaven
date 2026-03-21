@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, Form, Request, HTTPException, status, Response, BackgroundTasks
+import os
+from fastapi import APIRouter, Depends, Form, Request, HTTPException, status, BackgroundTasks
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 from typing import Optional
@@ -20,8 +21,8 @@ def register_page(request: Request, error: Optional[str] = None):
 @router.post("/register")
 def register_user(
     background_tasks: BackgroundTasks,
-    username: str = Form(...),
-    email: str = Form(...),
+    username: str = Form(..., max_length=30),
+    email: str = Form(..., max_length=254),
     password: str = Form(..., min_length=6, max_length=64),
     db: Session = Depends(get_db)
 ):
@@ -46,7 +47,7 @@ def verify_email_page(request: Request, email: str, error: Optional[str] = None)
 
 @router.post("/verify-email")
 def verify_email(
-    email: str = Form(...),
+    email: str = Form(..., max_length=254),
     code: str = Form(...),
     db: Session = Depends(get_db)
 ):
@@ -56,7 +57,7 @@ def verify_email(
 
     access_token = create_access_token(data={"sub": email})
     response = RedirectResponse("/", status_code=status.HTTP_303_SEE_OTHER)
-    response.set_cookie(key="access_token", value=f"Bearer {access_token}", httponly=True, secure=True, samesite="lax")
+    response.set_cookie(key="access_token", value=f"Bearer {access_token}", httponly=True, secure=os.getenv("COOKIE_SECURE", "false").lower() == "true", samesite="lax")
     return response
 
 
@@ -67,7 +68,7 @@ def login_page(request: Request, error: Optional[str] = None):
 
 @router.post("/login")
 def login(
-    email: str = Form(...),
+    email: str = Form(..., max_length=254),
     password: str = Form(...),
     db: Session = Depends(get_db)
 ):
@@ -83,7 +84,7 @@ def login(
 
     access_token = create_access_token(data={"sub": user.email})
     response = RedirectResponse("/", status_code=status.HTTP_303_SEE_OTHER)
-    response.set_cookie(key="access_token", value=f"Bearer {access_token}", httponly=True, secure=True, samesite="lax")
+    response.set_cookie(key="access_token", value=f"Bearer {access_token}", httponly=True, secure=os.getenv("COOKIE_SECURE", "false").lower() == "true", samesite="lax")
     return response
 
 

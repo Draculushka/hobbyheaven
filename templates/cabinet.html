@@ -3,7 +3,7 @@
 {% block title %}Личный Кабинет — HobbyHeaven{% endblock %}
 
 {% block nav %}
-<nav class="bg-white/90 backdrop-blur-xl sticky top-0 z-50 border-b border-border">
+<nav aria-label="Навигация кабинета" class="bg-white/90 backdrop-blur-xl sticky top-0 z-50 border-b border-border">
     <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
         <a href="/" class="text-xl font-bold text-primary tracking-tighter font-sans">HobbyHeaven</a>
         <div class="flex items-center gap-3">
@@ -20,7 +20,7 @@
 
     <div class="flex flex-col md:flex-row gap-12">
         <!-- Sidebar: Personas -->
-        <aside class="md:w-1/3">
+        <aside aria-label="Управление персонами" class="md:w-1/3">
             <div class="bg-white rounded-card p-8 border border-border shadow-sm md:sticky md:top-24">
                 <!-- Mobile toggle -->
                 <button id="toggle-sidebar" class="md:hidden w-full flex items-center justify-between mb-4" onclick="var c=document.getElementById('sidebar-content');c.classList.toggle('hidden');this.setAttribute('aria-expanded',c.classList.contains('hidden')?'false':'true')" aria-expanded="false" aria-controls="sidebar-content">

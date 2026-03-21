@@ -1,7 +1,7 @@
 import hmac
 from fastapi import APIRouter, Depends, Form, Request, status, UploadFile, File, HTTPException, BackgroundTasks
 from fastapi.responses import RedirectResponse
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from datetime import datetime, timezone
 from typing import Optional
 
@@ -16,7 +16,7 @@ from services.notification_service import send_mock_email
 router = APIRouter()
 
 @router.get("/cabinet")
-async def cabinet_page(request: Request, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+def cabinet_page(request: Request, page: int = 1, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     if not current_user:
         return RedirectResponse("/login", status_code=status.HTTP_303_SEE_OTHER)
 
@@ -24,17 +24,19 @@ async def cabinet_page(request: Request, db: Session = Depends(get_db), current_
     personas = db.query(Persona).filter(Persona.user_id == current_user.id).all()
     # Получаем все посты этих персон
     persona_ids = [p.id for p in personas]
-    hobbies = db.query(Hobby).filter(Hobby.persona_id.in_(persona_ids)).order_by(Hobby.created_at.desc()).all()
+    limit = 10
+    offset = (page - 1) * limit
+    hobbies = db.query(Hobby).filter(Hobby.persona_id.in_(persona_ids)).options(joinedload(Hobby.author_persona)).order_by(Hobby.created_at.desc()).offset(offset).limit(limit).all()
 
     return templates.TemplateResponse(
         "cabinet.html",
-        {"request": request, "user": current_user, "personas": personas, "hobbies": hobbies}
+        {"request": request, "user": current_user, "personas": personas, "hobbies": hobbies, "page": page}
     )
 
 @router.post("/cabinet/persona/create")
-async def create_persona(
-    username: str = Form(...),
-    bio: str = Form(None),
+def create_persona(
+    username: str = Form(..., max_length=30),
+    bio: str = Form(None, max_length=500),
     avatar: UploadFile = File(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -69,7 +71,7 @@ async def create_persona(
     return RedirectResponse("/cabinet", status_code=status.HTTP_303_SEE_OTHER)
 
 @router.post("/cabinet/delete")
-async def request_delete_account(
+def request_delete_account(
     background_tasks: BackgroundTasks,
     current_user: User = Depends(get_current_user)
 ):
@@ -83,13 +85,13 @@ async def request_delete_account(
     return RedirectResponse("/cabinet/delete/confirm", status_code=status.HTTP_303_SEE_OTHER)
 
 @router.get("/cabinet/delete/confirm")
-async def confirm_delete_page(request: Request, error: Optional[str] = None, current_user: User = Depends(get_current_user)):
+def confirm_delete_page(request: Request, error: Optional[str] = None, current_user: User = Depends(get_current_user)):
     if not current_user:
         return RedirectResponse("/login", status_code=status.HTTP_303_SEE_OTHER)
     return templates.TemplateResponse("confirm_delete.html", {"request": request, "error": error, "email": current_user.email})
 
 @router.post("/cabinet/delete/confirm")
-async def confirm_delete_action(
+def confirm_delete_action(
     code: str = Form(...),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -114,14 +116,19 @@ async def confirm_delete_action(
     return response
 
 @router.get("/profile/{username}")
-async def public_profile(username: str, request: Request, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    persona = db.query(Persona).filter(Persona.username == username).first()
+def public_profile(username: str, request: Request, page: int = 1, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    persona = db.query(Persona).join(User).filter(
+        Persona.username == username,
+        User.deleted_at.is_(None)
+    ).first()
     if not persona:
         raise HTTPException(status_code=404, detail="Профиль не найден")
 
-    hobbies = db.query(Hobby).filter(Hobby.persona_id == persona.id).order_by(Hobby.created_at.desc()).all()
+    limit = 10
+    offset = (page - 1) * limit
+    hobbies = db.query(Hobby).filter(Hobby.persona_id == persona.id).order_by(Hobby.created_at.desc()).offset(offset).limit(limit).all()
 
     return templates.TemplateResponse(
         "profile.html",
-        {"request": request, "persona": persona, "hobbies": hobbies, "user": current_user}
+        {"request": request, "persona": persona, "hobbies": hobbies, "user": current_user, "page": page}
     )

@@ -73,6 +73,8 @@ def verify_code(db: Session, email: str, code: str) -> bool:
 
     if stored_code and hmac.compare_digest(stored_code, code):
         user = get_user_by_email(db, email)
+        if user and user.deleted_at:
+            return False
         if user:
             user.is_active = True
             db.commit()

@@ -19,9 +19,13 @@ from services.hobby_service import (
 
 # ─── helpers ────────────────────────────────────────────────────────────────
 
-def make_upload_file(filename="test.jpg", content=b"fake image data", size=None):
+JPEG_MAGIC = b'\xff\xd8\xff\xe0' + b'\x00' * 100  # valid JPEG header
+
+def make_upload_file(filename="test.jpg", content=None, size=None):
+    if content is None:
+        content = JPEG_MAGIC
     if size is not None:
-        content = b"x" * size
+        content = JPEG_MAGIC + b'\x00' * (size - len(JPEG_MAGIC))
     file = MagicMock(spec=UploadFile)
     file.filename = filename
     file.file = io.BytesIO(content)

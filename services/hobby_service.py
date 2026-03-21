@@ -1,24 +1,34 @@
 import os
 import uuid
 from pathlib import Path
-import nh3
 from fastapi import HTTPException
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import or_, func
 from models import Hobby, Tag
-from core.config import UPLOAD_DIR, ALLOWED_TAGS, ALLOWED_ATTRS, ALLOWED_PROTOCOLS
+from core.config import UPLOAD_DIR
+from core.templates import sanitize_html
 
 ALLOWED_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif', '.webp'}
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
 
+MAGIC_BYTES = {
+    b'\xff\xd8\xff': '.jpg',
+    b'\x89PNG': '.png',
+    b'GIF87a': '.gif',
+    b'GIF89a': '.gif',
+    b'RIFF': '.webp',
+}
+
+
+def _check_magic_bytes(content: bytes, ext: str) -> bool:
+    for magic, expected_ext in MAGIC_BYTES.items():
+        if content.startswith(magic):
+            return True
+    return False
+
 
 def sanitize_description(description: str) -> str:
-    return nh3.clean(
-        description,
-        tags=set(ALLOWED_TAGS),
-        attributes={k: set(v) for k, v in ALLOWED_ATTRS.items()},
-        url_schemes=set(ALLOWED_PROTOCOLS),
-    )
+    return str(sanitize_html(description))
 
 
 def save_upload_image(file) -> str | None:
@@ -31,6 +41,8 @@ def save_upload_image(file) -> str | None:
     content = file.file.read()
     if len(content) > MAX_FILE_SIZE:
         raise HTTPException(status_code=400, detail="Файл слишком большой. Максимум 5 МБ")
+    if not _check_magic_bytes(content, ext):
+        raise HTTPException(status_code=400, detail="Содержимое файла не соответствует формату")
     file.file.seek(0)
     filename = f"{uuid.uuid4().hex}{ext}"
     path = UPLOAD_DIR / filename
@@ -41,6 +53,8 @@ def save_upload_image(file) -> str | None:
 
 def delete_image(filename: str):
     if not filename:
+        return
+    if '..' in filename or '/' in filename:
         return
     path = UPLOAD_DIR / filename
     if path.is_file():
