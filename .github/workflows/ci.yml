@@ -62,7 +62,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Build Docker image
-        run: docker build -t hobbyheaven .
+        run: docker build -t hobbyhold .
 
       - name: Smoke test — verify app imports
         env:
@@ -72,7 +72,7 @@ jobs:
           docker run --rm \
             -e SECRET_KEY="$SECRET_KEY" \
             -e DATABASE_URL="$DATABASE_URL" \
-            hobbyheaven python -c "from main import app; print('App OK')"
+            hobbyhold python -c "from main import app; print('App OK')"
 
   notify:
     runs-on: ubuntu-latest
