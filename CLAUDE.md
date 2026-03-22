@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-HobbyHeaven — веб-приложение для публикации и обмена хобби. Python 3.12, FastAPI, PostgreSQL (SQLAlchemy ORM), Jinja2 + Tailwind CSS, Redis для кэширования и верификации.
+HobbyHold — веб-приложение для публикации и обмена хобби. Python 3.12, FastAPI, PostgreSQL (SQLAlchemy ORM), Jinja2 + Tailwind CSS, Redis для кэширования и верификации.
 
 ## Commands
 

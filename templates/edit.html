@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Редактирование — HobbyHeaven{% endblock %}
+{% block title %}Редактирование — HobbyHold{% endblock %}
 
 {% block head %}
 <script src="https://cdn.ckeditor.com/ckeditor5/40.0.0/classic/ckeditor.js"></script>
@@ -13,7 +13,7 @@
 {% block nav %}
 <nav aria-label="Главная навигация" class="bg-white/80 backdrop-blur-md sticky top-0 z-40 border-b border-border">
     <div class="max-w-4xl mx-auto px-6 py-4 flex justify-between items-center">
-        <a href="/" class="text-2xl font-bold text-primary-dark tracking-tighter font-sans">HobbyHeaven</a>
+        <a href="/" class="text-2xl font-bold text-primary-dark tracking-tighter font-sans">HobbyHold</a>
         <div class="flex items-center gap-6">
             {% if user %}
             {% set default_persona = user.personas | selectattr("is_default", "equalto", True) | first %}

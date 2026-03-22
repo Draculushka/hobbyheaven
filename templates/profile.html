@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}{{ persona.username }} — Профиль HobbyHeaven{% endblock %}
+{% block title %}{{ persona.username }} — Профиль HobbyHold{% endblock %}
 
 {% block head %}
 <style>
@@ -11,7 +11,7 @@
 {% block nav %}
 <nav aria-label="Навигация профиля" class="bg-white/90 backdrop-blur-xl sticky top-0 z-50 border-b border-border">
     <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-        <a href="/" class="text-xl font-bold text-primary tracking-tighter font-sans">HobbyHeaven</a>
+        <a href="/" class="text-xl font-bold text-primary tracking-tighter font-sans">HobbyHold</a>
         <div class="flex items-center gap-4">
             <a href="/" class="text-sm font-bold text-muted hover:text-primary transition-colors py-2">На главную</a>
             {% if user %}
@@ -104,6 +104,6 @@
 
 {% block footer %}
 <footer class="mt-20 py-12 border-t border-border text-center">
-    <p class="text-sm font-bold text-subtle uppercase tracking-widest font-sans">HobbyHeaven — Сделано с любовью к деталям</p>
+    <p class="text-sm font-bold text-subtle uppercase tracking-widest font-sans">HobbyHold — Сделано с любовью к деталям</p>
 </footer>
 {% endblock %}

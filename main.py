@@ -14,7 +14,7 @@ from api.endpoints import auth, hobbies, profile  # noqa: E402
 # Убедимся, что папка для загрузок существует
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
-app = FastAPI(title="Hobby Heaven")
+app = FastAPI(title="Hobby Hold")
 
 @app.middleware("http")
 async def add_csrf_to_scope(request, call_next):

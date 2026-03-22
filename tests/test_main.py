@@ -147,7 +147,7 @@ def test_home_page_renders(client):
     """GET / returns 200 with hobby list."""
     response = client.get("/")
     assert response.status_code == 200
-    assert "HobbyHeaven" in response.text
+    assert "HobbyHold" in response.text
 
 
 def test_home_page_search(client, db):
