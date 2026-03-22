@@ -136,7 +136,7 @@ def test_login_valid_credentials(client, db):
 
     response = client.post(
         "/login",
-        data={"email": "login@test.com", "password": "secret123"},
+        data={"identifier": "login@test.com", "password": "secret123"},
         headers=_csrf(client),
         follow_redirects=False,
     )
@@ -158,7 +158,7 @@ def test_login_soft_deleted_user(client, db):
 
     response = client.post(
         "/login",
-        data={"email": "deleted@test.com", "password": "secret123"},
+        data={"identifier": "deleted@test.com", "password": "secret123"},
         headers=_csrf(client),
         follow_redirects=False,
     )
@@ -177,7 +177,7 @@ def test_login_nonexistent_email(client, db):
     # Wrong password
     resp_wrong_pw = client.post(
         "/login",
-        data={"email": "real@test.com", "password": "wrongpassword"},
+        data={"identifier": "real@test.com", "password": "wrongpassword"},
         headers=_csrf(client),
         follow_redirects=False,
     )
@@ -185,17 +185,20 @@ def test_login_nonexistent_email(client, db):
     # Non-existent email
     resp_no_email = client.post(
         "/login",
-        data={"email": "ghost@test.com", "password": "secret123"},
+        data={"identifier": "ghost@test.com", "password": "secret123"},
         headers=_csrf(client),
         follow_redirects=False,
     )
 
-    # Both should redirect to /login with error (same behavior)
+    # Both should redirect to /login with error
     assert resp_wrong_pw.status_code == resp_no_email.status_code
     assert "error" in resp_wrong_pw.headers["location"]
     assert "error" in resp_no_email.headers["location"]
-    # Same error message (no info leak)
-    assert resp_wrong_pw.headers["location"] == resp_no_email.headers["location"]
+    
+    # Verify we now get DIFFERENT error messages (as requested by user)
+    assert resp_wrong_pw.headers["location"] != resp_no_email.headers["location"]
+    assert "error=%D0%9D%D0%B5%D0%B2%D0%B5%D1%80%D0%BD%D1%8B%D0%B9%20%D0%BF%D0%B0%D1%80%D0%BE%D0%BB%D1%8C" in resp_wrong_pw.headers["location"]
+    assert "error=%D0%9F%D0%BE%D0%BB%D1%8C%D0%B7%D0%BE%D0%B2%D0%B0%D1%82%D0%B5%D0%BB%D1%8C%20%D1%81%20%D1%82%D0%B0%D0%BA%D0%B8%D0%BC%20Email" in resp_no_email.headers["location"]
 
 
 # ---------------------------------------------------------------------------
@@ -208,7 +211,7 @@ def test_cookie_security_flags(client, db):
 
     response = client.post(
         "/login",
-        data={"email": "cookie@test.com", "password": "secret123"},
+        data={"identifier": "cookie@test.com", "password": "secret123"},
         headers=_csrf(client),
         follow_redirects=False,
     )

@@ -47,7 +47,7 @@
     <section class="mb-20">
         <div class="bg-white p-8 md:p-10 rounded-card border border-border shadow-sm">
             <form action="/update/{{ hobby.id }}" method="post" enctype="multipart/form-data" class="space-y-8">
-                <input type="hidden" name="csrftoken" value="{{ request.cookies.get('csrftoken', '') }}">
+                <input type="hidden" name="csrftoken" value="{{ request.scope.get('csrftoken', '') }}">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <div class="space-y-2">
                         <label for="edit-title" class="text-sm font-semibold uppercase tracking-wider text-muted-light ml-1">Название хобби</label>

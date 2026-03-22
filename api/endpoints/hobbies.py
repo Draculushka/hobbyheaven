@@ -21,7 +21,16 @@ def home(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
+    if current_user:
+        # Убедимся, что данные пользователя (токены и т.д.) актуальны
+        db.refresh(current_user)
+        current_user = db.query(User).options(
+            joinedload(User.active_persona),
+            joinedload(User.personas)
+        ).filter(User.id == current_user.id).first()
+
     limit = 10
+
     hobbies, total_pages = hobby_service.search_hobbies(db, search, page, limit)
     return templates.TemplateResponse(
         "index.html",
@@ -50,14 +59,19 @@ def create_hobby(
     if not current_user:
         return RedirectResponse("/login", status_code=status.HTTP_303_SEE_OTHER)
 
-    # Если persona_id не передана, используем дефолтную персону пользователя
+    # Если persona_id не передана, используем активную персону пользователя
     if not persona_id:
-        persona = db.query(Persona).filter(Persona.user_id == current_user.id, Persona.is_default.is_(True)).first()
-        if not persona:
-            persona = db.query(Persona).filter(Persona.user_id == current_user.id).first()
-        if not persona:
-            raise HTTPException(status_code=400, detail="No persona found for user")
-        persona_id = persona.id
+        persona_id = current_user.active_persona_id
+        if not persona_id:
+            # Фолбэк на дефолтную или любую
+            persona = db.query(Persona).filter(Persona.user_id == current_user.id, Persona.is_default.is_(True)).first()
+            if not persona:
+                persona = db.query(Persona).filter(Persona.user_id == current_user.id).first()
+            if not persona:
+                raise HTTPException(status_code=400, detail="No persona found for user")
+            persona_id = persona.id
+            current_user.active_persona_id = persona_id
+            db.commit()
     else:
         # Проверяем, что выбранная персона принадлежит текущему юзеру
         persona = db.query(Persona).filter(Persona.id == persona_id, Persona.user_id == current_user.id).first()

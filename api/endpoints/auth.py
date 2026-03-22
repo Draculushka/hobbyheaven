@@ -66,13 +66,14 @@ def login_page(request: Request, error: Optional[str] = None):
 
 @router.post("/login")
 def login(
-    email: str = Form(..., max_length=254),
+    identifier: str = Form(..., max_length=254),
     password: str = Form(...),
     db: Session = Depends(get_db)
 ):
-    user = auth_service.authenticate_user(db, email, password)
-    if not user:
-        return RedirectResponse("/login?error=Invalid credentials", status_code=status.HTTP_303_SEE_OTHER)
+    user, error = auth_service.authenticate_user(db, identifier, password)
+    if error:
+        import urllib.parse
+        return RedirectResponse(f"/login?error={urllib.parse.quote(error)}", status_code=status.HTTP_303_SEE_OTHER)
 
     if user.deleted_at:
         return RedirectResponse("/login?error=Ваш аккаунт в процессе удаления. Обратитесь в поддержку для восстановления.", status_code=status.HTTP_303_SEE_OTHER)

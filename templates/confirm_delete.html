@@ -19,7 +19,7 @@
     {% endif %}
 
     <form action="/cabinet/delete/confirm" method="post" class="space-y-6">
-        <input type="hidden" name="csrftoken" value="{{ request.cookies.get('csrftoken', '') }}">
+        <input type="hidden" name="csrftoken" value="{{ request.scope.get('csrftoken', '') }}">
         <div>
             <label for="delete-code" class="block text-sm font-bold text-danger mb-2 uppercase tracking-wider">Код подтверждения</label>
             <input id="delete-code" type="text" name="code"

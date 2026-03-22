@@ -30,22 +30,49 @@
                 <h2 class="text-2xl font-bold mb-6 text-dark hidden md:block">Мои Альтер-эго</h2>
 
                 <div id="sidebar-content" class="hidden md:block">
+                    <!-- Tokens Balance -->
+                    <div class="mb-6 bg-dark text-white p-4 rounded-2xl flex items-center justify-between shadow-lg overflow-hidden relative group">
+                        <div class="absolute inset-0 bg-gradient-to-r from-yellow-400/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        <div class="relative z-10">
+                            <div class="text-[10px] font-bold uppercase tracking-[0.2em] opacity-60 mb-1">Баланс токенов</div>
+                            <div class="text-2xl font-black font-sans flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-yellow-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
+                                {{ user.tokens }}
+                            </div>
+                        </div>
+                        <div class="relative z-10 bg-white/10 p-2 rounded-xl backdrop-blur-md">
+                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                        </div>
+                    </div>
+
                     <div class="space-y-4 mb-8">
                         {% for persona in personas %}
-                        <div class="flex items-center gap-4 p-4 rounded-2xl border {{ 'border-primary bg-orange-50/50' if persona.is_default else 'border-border bg-surface' }}">
+                        {% set is_active = (persona.id == user.active_persona_id) %}
+                        <div class="flex items-center gap-4 p-4 rounded-2xl border transition-all duration-300 {{ 'border-[#FFD700] bg-yellow-50/30 shadow-[0_0_15px_rgba(255,215,0,0.1)]' if is_active else 'border-border bg-surface' }}">
                             {% if persona.avatar_path %}
-                            <img src="/uploads/{{ persona.avatar_path }}" alt="{{ persona.username }}" class="w-12 h-12 rounded-full object-cover" width="48" height="48" loading="lazy">
+                            <img src="/uploads/{{ persona.avatar_path }}" alt="{{ persona.username }}" class="w-12 h-12 rounded-full object-cover {{ 'ring-2 ring-[#FFD700]' if is_active else '' }}" width="48" height="48" loading="lazy">
                             {% else %}
-                            <div class="w-12 h-12 bg-dark rounded-full flex items-center justify-center text-white font-bold">{{ persona.username[0].upper() }}</div>
+                            <div class="w-12 h-12 {{ 'bg-[#FFD700]' if is_active else 'bg-dark' }} rounded-full flex items-center justify-center text-white font-bold">{{ persona.username[0].upper() }}</div>
                             {% endif %}
-                            <div>
-                                <div class="flex items-center gap-2">
-                                    <h3 class="font-bold text-lg leading-tight font-sans">{{ persona.username }}</h3>
-                                    <a href="/profile/{{ persona.username }}" class="text-subtle hover:text-primary transition-colors" title="Посмотреть публичный профиль" aria-label="Профиль {{ persona.username }}">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-                                    </a>
+                            <div class="flex-grow">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        {% if is_active %}
+                                            <h3 class="font-bold text-lg leading-tight font-sans text-dark">{{ persona.username }}</h3>
+                                        {% else %}
+                                            <form action="/cabinet/persona/switch/{{ persona.id }}" method="post" id="switch-form-{{ persona.id }}">
+                                                <input type="hidden" name="csrftoken" value="{{ request.scope.get('csrftoken', '') }}">
+                                                <button type="submit" class="font-bold text-lg leading-tight font-sans text-dark hover:text-primary hover:underline decoration-dotted transition-colors text-left">
+                                                    {{ persona.username }}
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                        <a href="/profile/{{ persona.username }}" class="text-subtle hover:text-primary transition-colors" title="Посмотреть публичный профиль" aria-label="Профиль {{ persona.username }}">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                                        </a>
+                                    </div>
                                 </div>
-                                {% if persona.is_default %}<span class="text-[10px] font-bold text-primary uppercase tracking-widest font-sans">Основная</span>{% endif %}
+                                {% if persona.is_default %}<span class="text-[9px] font-medium text-subtle uppercase tracking-tighter">Основная</span>{% endif %}
                             </div>
                         </div>
                         {% endfor %}
@@ -53,9 +80,10 @@
 
                     <h3 class="font-bold text-sm text-muted uppercase tracking-wider mb-4 font-sans">Создать новую маску</h3>
 
-                    {% if personas|length < 3 %}
+                    {% set limit = 4 if user.is_premium else 2 %}
+                    {% if personas|length < limit %}
                     <form action="/cabinet/persona/create" method="post" enctype="multipart/form-data" class="space-y-4">
-                        <input type="hidden" name="csrftoken" value="{{ request.cookies.get('csrftoken', '') }}">
+                        <input type="hidden" name="csrftoken" value="{{ request.scope.get('csrftoken', '') }}">
                         <div>
                             <label for="new-persona-name" class="sr-only">Псевдоним</label>
                             <input id="new-persona-name" type="text" name="username" placeholder="Псевдоним" required class="w-full bg-surface border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-primary outline-none">
@@ -72,7 +100,10 @@
                     </form>
                     {% else %}
                     <div class="bg-orange-50 text-primary-dark p-4 rounded-2xl text-center text-sm font-bold">
-                        Достигнут лимит масок (3/3)
+                        Достигнут лимит масок ({{ personas|length }}/{{ limit }})
+                        {% if not user.is_premium %}
+                        <div class="mt-2 text-[10px] opacity-70">Станьте Premium для лимита в 4 маски</div>
+                        {% endif %}
                     </div>
                     {% endif %}
                 </div>
@@ -80,7 +111,7 @@
 
             <div class="mt-8">
                 <form action="/cabinet/delete" method="post" onsubmit="return confirm('Вы уверены, что хотите удалить аккаунт? Будет отправлен код подтверждения.');">
-                    <input type="hidden" name="csrftoken" value="{{ request.cookies.get('csrftoken', '') }}">
+                    <input type="hidden" name="csrftoken" value="{{ request.scope.get('csrftoken', '') }}">
                     <button type="submit" class="w-full text-center text-danger text-xs font-bold uppercase tracking-widest hover:underline py-2">Удалить аккаунт</button>
                 </form>
             </div>
@@ -117,7 +148,7 @@
                                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                                     </a>
                                     <form action="/delete-hobby/{{ hobby.id }}" method="post" onsubmit="return confirm('Удалить пост?');">
-                                        <input type="hidden" name="csrftoken" value="{{ request.cookies.get('csrftoken', '') }}">
+                                        <input type="hidden" name="csrftoken" value="{{ request.scope.get('csrftoken', '') }}">
                                         <button type="submit" class="text-muted hover:text-danger bg-surface hover:bg-red-50 p-3 rounded-lg transition-colors" aria-label="Удалить {{ hobby.title }}">
                                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                         </button>

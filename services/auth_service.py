@@ -29,15 +29,30 @@ def create_user(db: Session, username: str, email: str, password: str) -> User:
         is_default=True
     )
     db.add(default_persona)
+    db.flush()
+
+    new_user.active_persona_id = default_persona.id
     db.commit()
 
     return new_user
 
-def authenticate_user(db: Session, email: str, password: str) -> User | None:
-    user = db.query(User).filter(User.email == email).first()
-    if not user or not verify_password(password, user.hashed_password):
-        return None
-    return user
+def authenticate_user(db: Session, identifier: str, password: str) -> tuple[User | None, str | None]:
+    # 1. Пробуем найти по email
+    user = db.query(User).filter(User.email == identifier).first()
+    
+    # 2. Если не нашли, пробуем по никнейму персоны
+    if not user:
+        persona = db.query(Persona).filter(Persona.username == identifier).first()
+        if persona:
+            user = persona.user
+            
+    if not user:
+        return None, "Пользователь с таким Email или Никнеймом не найден"
+            
+    if not verify_password(password, user.hashed_password):
+        return None, "Неверный пароль"
+        
+    return user, None
 
 def request_verification_code(email: str) -> str:
     """Генерирует и сохраняет код в Redis. Возвращает код (или None если кулдаун)."""

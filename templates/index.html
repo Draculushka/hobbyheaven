@@ -42,10 +42,24 @@
     <div class="max-w-6xl mx-auto px-4">
         <!-- Desktop row -->
         <div class="h-16 flex items-center gap-4">
-            <!-- Logo -->
+            <!-- Logo (Inline SVG) -->
             <a href="/" class="flex-shrink-0" aria-label="HobbyHeaven — на главную">
                 <div class="w-10 h-10 rounded-xl overflow-hidden shadow-[0_8px_16px_-3px_rgba(230,126,34,0.3)] hover:scale-110 transition-all duration-500">
-                    <img src="/static/images/favicon.svg" alt="HobbyHeaven" width="40" height="40">
+                    <svg width="40" height="40" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                      <defs>
+                        <linearGradient id="navLogoBg" x1="0%" y1="0%" x2="100%" y2="100%">
+                          <stop offset="0%" style="stop-color:#FF9F43;stop-opacity:1" />
+                          <stop offset="100%" style="stop-color:#EE5253;stop-opacity:1" />
+                        </linearGradient>
+                      </defs>
+                      <rect width="200" height="200" rx="40" fill="url(#navLogoBg)"/>
+                      <path d="M30 30 C 5 65, 35 145, 100 100 C 165 55, 195 135, 172 172 L 168 168 C 185 145, 155 65, 100 100 C 45 135, 15 55, 30 30 Z" fill="white" opacity="0.15"/>
+                      <path d="M30 30 C 10 60, 40 140, 100 100 C 160 60, 190 140, 170 170 L 171 170 C 193 140, 163 60, 103 100 C 43 140, 13 60, 33 30 Z" fill="white" opacity="0.4"/>
+                      <g transform="rotate(-45, 100, 100)">
+                        <rect x="94" y="65" width="12" height="108" rx="6" fill="#2D3436"/>
+                        <path d="M92 45 Q88 15 100 0 Q112 15 108 45 Z" fill="white"/>
+                      </g>
+                    </svg>
                 </div>
             </a>
 
@@ -70,7 +84,12 @@
             <!-- Actions -->
             <div class="flex items-center gap-2 ml-auto">
                 {% if user %}
-                {% set default_persona = user.personas | selectattr("is_default", "equalto", True) | first %}
+                <div class="hidden sm:flex items-center gap-2 bg-dark text-white px-3 py-1.5 rounded-xl mr-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-yellow-400" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>
+                    <span class="text-xs font-black">{{ user.tokens }}</span>
+                </div>
+                {% set default_persona = user.personas | selectattr("id", "equalto", user.active_persona_id) | first %}
+                {% if not default_persona %}{% set default_persona = user.personas | selectattr("is_default", "equalto", True) | first %}{% endif %}
                 {% set display_name = default_persona.username if default_persona else user.email.split('@')[0] %}
                 <a href="/cabinet" class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white font-bold text-xs shadow-md hover:scale-110 transition-transform" title="Личный кабинет" aria-label="Личный кабинет">{{ display_name[0].upper() }}</a>
                 <a href="/logout" class="text-xs font-bold text-subtle hover:text-danger uppercase tracking-widest transition-colors px-2 py-2">Выход</a>
@@ -115,6 +134,36 @@
 {% block content %}
 <div class="max-w-4xl mx-auto p-6 md:p-12">
     <header class="mb-12 text-center">
+        <!-- Тот самый легендарный логотип -->
+        <div class="inline-block mb-6 hover:scale-110 transition-transform duration-700 cursor-pointer" onclick="location.reload()">
+            <svg width="120" height="120" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" class="drop-shadow-2xl">
+              <defs>
+                <linearGradient id="headerLogoBg" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style="stop-color:#FF9F43;stop-opacity:1" />
+                  <stop offset="100%" style="stop-color:#EE5253;stop-opacity:1" />
+                </linearGradient>
+                <filter id="headerGlassBlur" x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur in="SourceGraphic" stdDeviation="2" />
+                </filter>
+                <filter id="headerTrailGlow">
+                  <feGaussianBlur stdDeviation="3" result="blur" />
+                  <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
+              </defs>
+              <rect width="200" height="200" rx="40" fill="url(#headerLogoBg)"/>
+              <path d="M30 30 C 5 65, 35 145, 100 100 C 165 55, 195 135, 172 172 L 168 168 C 185 145, 155 65, 100 100 C 45 135, 15 55, 30 30 Z" fill="white" opacity="0.15" filter="url(#headerTrailGlow)"/>
+              <path d="M30 30 C 10 60, 40 140, 100 100 C 160 60, 190 140, 170 170 L 171 170 C 193 140, 163 60, 103 100 C 43 140, 13 60, 33 30 Z" fill="white" opacity="0.4"/>
+              <g transform="rotate(-45, 100, 100)">
+                <rect x="94" y="65" width="12" height="108" rx="6" fill="#2D3436"/>
+                <rect x="90" y="45" width="20" height="20" rx="4" fill="white" opacity="0.3" filter="url(#headerGlassBlur)"/>
+                <rect x="90" y="45" width="20" height="20" rx="4" fill="none" stroke="white" stroke-width="0.5" opacity="0.5"/>
+                <path d="M92 45 Q88 15 100 0 Q112 15 108 45 Z" fill="white"/>
+                <circle cx="100" cy="8" r="6" fill="white" opacity="0.4"/>
+              </g>
+              <circle cx="160" cy="40" r="4" fill="white" opacity="0.6"/>
+              <circle cx="40" cy="160" r="2" fill="white" opacity="0.4"/>
+            </svg>
+        </div>
         <h1 class="text-6xl md:text-8xl font-bold text-dark mb-4 tracking-tighter opacity-90">HobbyHeaven</h1>
         <p class="text-lg text-muted font-serif flex flex-col md:flex-row items-center justify-center gap-2 md:gap-4 italic">
             <span>то, что любим</span>
@@ -127,15 +176,14 @@
     {% if user %}
     <section class="mb-16 bg-white rounded-card-lg border border-border p-8 shadow-sm" aria-label="Создание публикации">
         <form action="/create-hobby" method="post" enctype="multipart/form-data" class="space-y-6">
-            <input type="hidden" name="csrftoken" value="{{ request.cookies.get('csrftoken', '') }}">
+            <input type="hidden" name="csrftoken" value="{{ request.scope.get('csrftoken', '') }}">
             <div class="flex items-center gap-4 mb-4">
                 <label for="persona-select" class="sr-only">Выбрать персону</label>
                 <select id="persona-select" name="persona_id" class="bg-surface text-dark text-sm font-bold px-4 py-2 rounded-xl border-none outline-none focus:ring-2 focus:ring-primary">
                     {% for persona in user.personas %}
-                    <option value="{{ persona.id }}">{{ persona.username }}</option>
+                    <option value="{{ persona.id }}" {{ 'selected' if persona.id == user.active_persona_id }}>{{ persona.username }}</option>
                     {% endfor %}
                 </select>
-                <span class="text-xs font-bold text-subtle uppercase tracking-wider">От чьего имени пишем?</span>
             </div>
             <label for="hobby-title" class="sr-only">Название хобби</label>
             <input id="hobby-title" type="text" name="title" placeholder="Название твоего хобби" class="w-full text-2xl font-bold border-none focus:ring-0 placeholder-subtle" required>
@@ -163,6 +211,7 @@
 
     <!-- Hobby Feed -->
     <h2 class="sr-only">Лента публикаций</h2>
+    {% set user_persona_ids = (user.personas | map(attribute='id') | list) if user else [] %}
     <div class="space-y-12">
         {% for hobby in hobbies %}
         <article class="post-card bg-white rounded-card-lg border border-border overflow-hidden group">
@@ -194,7 +243,94 @@
                                 {{ hobby.author_persona.username }}
                             </a>
                         </div>
-                        <div class="text-muted font-serif text-lg italic line-clamp-4">{{ hobby.description | sanitize }}</div>
+                        <div class="text-muted font-serif text-lg italic line-clamp-4 mb-8">{{ hobby.description | sanitize }}</div>
+
+                        <!-- Взаимодействия (Лайки и Комменты) -->
+                        <div class="flex flex-wrap items-center gap-3 pt-6 border-t border-border">
+                            <!-- Обычный лайк (Сердечко) -->
+                            {% set heart_count = hobby.reactions | selectattr('emoji_type', 'equalto', 'heart') | list | length %}
+                            {% set my_heart = hobby.reactions | selectattr('persona_id', 'in', user_persona_ids) | selectattr('emoji_type', 'equalto', 'heart') | first %}
+                            <button onclick="toggleLike({{ hobby.id }}, 'heart')" 
+                                    class="flex items-center gap-2 px-4 py-2 {{ 'bg-red-50 text-danger' if my_heart else 'bg-surface text-muted' }} rounded-full hover:scale-105 transition-all group">
+                                <span class="text-base {{ 'filter-none' if my_heart else 'grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100' }}">❤️</span>
+                                <span class="text-sm font-bold">{{ heart_count }}</span>
+                            </button>
+
+                            <!-- Премиум лайки -->
+                            {% for emo in ['fire', 'rocket', 'star'] %}
+                                {% set emo_icon = {'fire': '🔥', 'rocket': '🚀', 'star': '⭐'}[emo] %}
+                                {% set emo_count = hobby.reactions | selectattr('emoji_type', 'equalto', emo) | list | length %}
+                                {% set my_emo = hobby.reactions | selectattr('persona_id', 'in', user_persona_ids) | selectattr('emoji_type', 'equalto', emo) | first %}
+                                <button onclick="toggleLike({{ hobby.id }}, '{{ emo }}')" 
+                                        class="flex items-center gap-2 px-4 py-2 {{ 'bg-blue-50 ring-1 ring-blue-100' if my_emo else 'bg-surface' }} rounded-full hover:scale-105 transition-all group"
+                                        title="{{ 'Стоит 1 токен' if user and user.is_premium else 'Нужен Premium' }}">
+                                    <span class="text-base {{ 'filter-none' if my_emo else 'grayscale opacity-40 group-hover:grayscale-0 group-hover:opacity-100' }}">{{ emo_icon }}</span>
+                                    {% if emo_count > 0 %}
+                                    <span class="text-sm font-bold text-muted">{{ emo_count }}</span>
+                                    {% endif %}
+                                </button>
+                            {% endfor %}
+
+                            <!-- Комментарии -->
+                            <button onclick="document.getElementById('comments-{{ hobby.id }}').classList.toggle('hidden')" 
+                                    class="flex items-center gap-2 px-4 py-2 bg-surface rounded-full hover:bg-blue-50 transition-all group ml-auto">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-muted group-hover:text-blue-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                </svg>
+                                <span class="text-sm font-bold text-muted group-hover:text-dark">{{ hobby.comments | length }}</span>
+                            </button>
+                        </div>
+
+                        <!-- Скрытая секция комментариев -->
+                        <div id="comments-{{ hobby.id }}" class="hidden mt-6 space-y-4 animate-in fade-in slide-in-from-top-2">
+                            <div class="max-h-60 overflow-y-auto space-y-3 pr-2 custom-scrollbar">
+                                {% for comment in hobby.comments %}
+                                <div class="bg-surface p-4 rounded-2xl text-sm group/comment">
+                                    <div class="flex justify-between items-center mb-1">
+                                        <span class="font-bold text-dark">{{ comment.author_persona.username }}</span>
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-[10px] text-subtle">{{ comment.created_at.strftime('%d.%m %H:%M') }}</span>
+                                            {% if user and (comment.author_persona.user_id == user.id or user.is_admin or hobby.author_persona.user_id == user.id) %}
+                                            <div class="hidden group-hover/comment:flex items-center gap-1">
+                                                {% if comment.author_persona.user_id == user.id %}
+                                                <button onclick="editComment({{ comment.id }}, {{ comment.text | tojson | forceescape }})" class="text-subtle hover:text-primary p-0.5" title="Редактировать">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                                </button>
+                                                {% endif %}
+                                                <button onclick="deleteComment({{ comment.id }})" class="text-subtle hover:text-danger p-0.5" title="Удалить">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                                </button>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <p class="text-muted leading-relaxed" id="comment-text-{{ comment.id }}">{{ comment.text }}</p>
+                                </div>
+                                {% endfor %}
+                            </div>
+                            
+                            {% if user %}
+                            <div class="space-y-2">
+                                <div class="text-[10px] font-bold text-primary uppercase tracking-widest px-1">
+                                    {% if user.active_persona %}
+                                        {{ user.active_persona.username }}
+                                    {% else %}
+                                        {% set active_p = user.personas | selectattr("id", "equalto", user.active_persona_id) | first %}
+                                        {{ active_p.username if active_p else '...' }}
+                                    {% endif %}
+                                </div>
+                                <div class="flex gap-2">
+                                    <input type="text" id="comment-input-{{ hobby.id }}" placeholder="Написать комментарий..." 
+                                           class="flex-grow bg-surface border-none rounded-xl px-4 py-2 text-sm focus:ring-2 focus:ring-primary outline-none transition-all">
+                                    <button onclick="addComment({{ hobby.id }})" class="bg-primary text-white p-2 rounded-xl hover:bg-primary-dark transition-all">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                            <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -241,12 +377,108 @@
 {% endblock %}
 
 {% block scripts %}
-{% if user %}
 <script>
+    {% if user %}
     ClassicEditor.create(document.querySelector('#editor'), {
         toolbar: ['bold', 'italic', 'link', 'bulletedList', 'numberedList'],
         placeholder: 'Поделись своей страстью...'
     }).catch(error => console.error(error));
+    {% endif %}
+
+    async function toggleLike(hobbyId, emojiType = 'heart') {
+        try {
+            const response = await fetch(`/api/v1/hobbies/${hobbyId}/reactions`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ emoji_type: emojiType })
+            });
+            
+            if (response.status === 401) {
+                window.location.href = '/login';
+                return;
+            }
+
+            if (response.ok) {
+                // Для простоты обновляем страницу, чтобы увидеть списанные токены и новую иконку
+                location.reload();
+            } else {
+                const error = await response.json();
+                alert(error.detail || 'Ошибка при установке реакции');
+            }
+        } catch (e) {
+            console.error('Like error:', e);
+        }
+    }
+
+    async function editComment(commentId, currentText) {
+        const newText = prompt("Редактировать комментарий:", currentText);
+        if (newText === null || newText.trim() === "" || newText === currentText) return;
+
+        try {
+            const response = await fetch(`/api/v1/hobbies/comments/${commentId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text: newText.trim() })
+            });
+
+            if (response.ok) {
+                location.reload();
+            } else {
+                const data = await response.json();
+                alert(data.detail || "Ошибка при редактировании");
+            }
+        } catch (e) {
+            console.error('Edit error:', e);
+        }
+    }
+
+    async function deleteComment(commentId) {
+        if (!confirm("Удалить этот комментарий?")) return;
+
+        try {
+            const response = await fetch(`/api/v1/hobbies/comments/${commentId}`, {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                location.reload();
+            } else {
+                const data = await response.json();
+                alert(data.detail || "Ошибка при удалении");
+            }
+        } catch (e) {
+            console.error('Delete error:', e);
+        }
+    }
+
+    async function addComment(hobbyId) {
+        const input = document.getElementById(`comment-input-${hobbyId}`);
+        if (!input) return;
+        const text = input.value.trim();
+        if (!text) return;
+
+        try {
+            const response = await fetch(`/api/v1/hobbies/${hobbyId}/comments`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ text: text })
+            });
+
+            if (response.status === 401) {
+                window.location.href = '/login';
+                return;
+            }
+
+            if (response.ok) {
+                location.reload(); 
+            }
+        } catch (e) {
+            console.error('Comment error:', e);
+        }
+    }
 </script>
-{% endif %}
 {% endblock %}

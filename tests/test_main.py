@@ -118,7 +118,7 @@ def test_login_invalid_credentials(client, db):
     _create_user(db)
     response = client.post(
         "/login",
-        data={"email": "test@example.com", "password": "wrongpassword"},
+        data={"identifier": "test@example.com", "password": "wrongpassword"},
         headers=_csrf(client),
         follow_redirects=False,
     )
@@ -131,7 +131,7 @@ def test_login_unverified_user(client, db):
     _create_user(db, is_active=False)
     response = client.post(
         "/login",
-        data={"email": "test@example.com", "password": "secret123"},
+        data={"identifier": "test@example.com", "password": "secret123"},
         headers=_csrf(client),
         follow_redirects=False,
     )

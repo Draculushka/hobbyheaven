@@ -3,7 +3,7 @@ import uuid
 from fastapi import HTTPException
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import or_, func
-from models import Hobby, Tag
+from models import Hobby, Tag, Comment, Reaction
 from core.config import UPLOAD_DIR
 from core.templates import sanitize_html
 
@@ -127,7 +127,7 @@ def search_hobbies(db: Session, search: str, page: int, limit: int):
     page = max(1, page)
     limit = max(1, min(limit, 100))
     offset = (page - 1) * limit
-    query = db.query(Hobby).join(Persona).join(User).filter(User.deleted_at.is_(None))
+    query = db.query(Hobby).join(Persona, Hobby.persona_id == Persona.id).join(Persona.user).filter(User.deleted_at.is_(None))
 
     if search:
         search_lower = search.lower().strip()
@@ -139,7 +139,12 @@ def search_hobbies(db: Session, search: str, page: int, limit: int):
     total = query.count()
     total_pages = max(1, (total + limit - 1) // limit)
     hobbies = (query
-        .options(joinedload(Hobby.author_persona), joinedload(Hobby.tags))
+        .options(
+            joinedload(Hobby.author_persona), 
+            joinedload(Hobby.tags),
+            joinedload(Hobby.comments).joinedload(Comment.author_persona),
+            joinedload(Hobby.reactions).joinedload(Reaction.author_persona)
+        )
         .order_by(Hobby.created_at.desc())
         .offset(offset).limit(limit).all())
     return hobbies, total_pages

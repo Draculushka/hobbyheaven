@@ -19,6 +19,10 @@ def cabinet_page(request: Request, page: int = 1, db: Session = Depends(get_db),
     if not current_user:
         return RedirectResponse("/login", status_code=status.HTTP_303_SEE_OTHER)
 
+    # Убедимся, что активная персона загружена
+    db.refresh(current_user)
+    _ = current_user.active_persona
+
     # Получаем все персоны пользователя
     personas = db.query(Persona).filter(Persona.user_id == current_user.id).all()
     # Получаем все посты этих персон
@@ -46,10 +50,14 @@ def create_persona(
     if not current_user:
         raise HTTPException(status_code=401)
 
-    # Проверяем лимит персон (максимум 3)
+    # Проверяем лимит персон (стандарт 2, премиум 4)
     persona_count = db.query(Persona).filter(Persona.user_id == current_user.id).count()
-    if persona_count >= 3:
-        raise HTTPException(status_code=400, detail="Достигнут лимит: максимум 3 альтер-эго на аккаунт")
+    limit = 4 if current_user.is_premium else 2
+    if persona_count >= limit:
+        msg = f"Достигнут лимит: максимум {limit} альтер-эго на аккаунт"
+        if not current_user.is_premium:
+            msg += ". Купите Premium для увеличения лимита до 4."
+        raise HTTPException(status_code=400, detail=msg)
 
     # Проверяем уникальность
     existing = db.query(Persona).filter(Persona.username == username).first()
@@ -69,6 +77,26 @@ def create_persona(
     )
     db.add(new_persona)
     db.commit()
+
+    return RedirectResponse("/cabinet", status_code=status.HTTP_303_SEE_OTHER)
+
+@router.post("/cabinet/persona/switch/{persona_id}")
+def switch_persona(
+    persona_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if not current_user:
+        raise HTTPException(status_code=401)
+
+    # Проверяем, что персона принадлежит юзеру
+    persona = db.query(Persona).filter(Persona.id == persona_id, Persona.user_id == current_user.id).first()
+    if not persona:
+        raise HTTPException(status_code=403, detail="Неверная персона")
+
+    current_user.active_persona_id = persona_id
+    db.commit()
+    db.refresh(current_user)
 
     return RedirectResponse("/cabinet", status_code=status.HTTP_303_SEE_OTHER)
 
@@ -115,7 +143,7 @@ def confirm_delete_action(
 
 @router.get("/profile/{username}")
 def public_profile(username: str, request: Request, page: int = 1, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    persona = db.query(Persona).join(User).filter(
+    persona = db.query(Persona).join(Persona.user).filter(
         Persona.username == username,
         User.deleted_at.is_(None)
     ).first()

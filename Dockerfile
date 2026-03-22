@@ -21,7 +21,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Создаём непривилегированного пользователя
-RUN adduser --disabled-password --no-create-home appuser
+RUN adduser --disabled-password --no-create-home --gecos "" appuser
 USER appuser
 
 # Команда для запуска (uvicorn)

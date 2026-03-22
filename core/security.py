@@ -27,6 +27,12 @@ def create_access_token(data: dict) -> str:
 async def get_current_user(request: Request, db: Session = Depends(get_db)) -> User | None:
     token = request.cookies.get("access_token")
     if not token:
+        # Пытаемся получить из заголовка Authorization
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            token = auth_header.split(" ")[1]
+            
+    if not token:
         return None
     try:
         if token.startswith("Bearer "):
@@ -39,4 +45,13 @@ async def get_current_user(request: Request, db: Session = Depends(get_db)) -> U
         logger.warning("JWT validation error: %s", e)
         return None
     user = db.query(User).filter(User.email == email, User.deleted_at.is_(None), User.is_active.is_(True)).first()
+    if user and not user.active_persona_id:
+        from models import Persona
+        default_persona = db.query(Persona).filter(Persona.user_id == user.id, Persona.is_default == True).first()
+        if not default_persona:
+            default_persona = db.query(Persona).filter(Persona.user_id == user.id).first()
+        if default_persona:
+            user.active_persona_id = default_persona.id
+            db.commit()
+            db.refresh(user)
     return user

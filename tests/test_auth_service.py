@@ -62,27 +62,47 @@ class TestAuthenticateUser:
     def test_tp_as06_correct_credentials(self, db):
         """TP-AS06: Correct email + password returns User."""
         self._make_user(db)
-        result = authenticate_user(db, "user@test.com", "correct")
+        result, error = authenticate_user(db, "user@test.com", "correct")
         assert result is not None
         assert result.email == "user@test.com"
+        assert error is None
 
     def test_tp_as07_wrong_password(self, db):
-        """TP-AS07: Correct email + wrong password returns None."""
+        """TP-AS07: Correct email + wrong password returns error."""
         self._make_user(db)
-        result = authenticate_user(db, "user@test.com", "wrong")
+        result, error = authenticate_user(db, "user@test.com", "wrong")
         assert result is None
+        assert error == "Неверный пароль"
 
     def test_tp_as08_nonexistent_email(self, db):
-        """TP-AS08: Non-existent email returns None."""
-        result = authenticate_user(db, "ghost@test.com", "any")
+        """TP-AS08: Non-existent email returns error."""
+        result, error = authenticate_user(db, "ghost@test.com", "any")
         assert result is None
+        assert error == "Пользователь с таким Email или Никнеймом не найден"
+
+    def test_tp_as08b_login_by_username(self, db):
+        """TP-AS08b: Correct username + password returns User."""
+        from core.security import get_password_hash
+        user = User(email="test@test.com", hashed_password=get_password_hash("pw"))
+        db.add(user)
+        db.flush()
+        persona = Persona(user_id=user.id, username="testuser", is_default=True)
+        db.add(persona)
+        db.commit()
+
+        result, error = authenticate_user(db, "testuser", "pw")
+        assert result is not None
+        assert result.id == user.id
+        assert result.email == "test@test.com"
+        assert error is None
 
     def test_tp_as09_soft_deleted_user(self, db):
         """TP-AS09: Soft-deleted user (deleted_at != None) is returned (endpoint handles deleted_at check)."""
         self._make_user(db, deleted_at=datetime.now(timezone.utc))
-        result = authenticate_user(db, "user@test.com", "correct")
+        result, error = authenticate_user(db, "user@test.com", "correct")
         assert result is not None
         assert result.deleted_at is not None
+        assert error is None
 
 
 # ── request_verification_code ────────────────────────────────────────────────

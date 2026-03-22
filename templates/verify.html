@@ -18,7 +18,7 @@
     {% endif %}
 
     <form action="/verify-email" method="post" class="space-y-6">
-        <input type="hidden" name="csrftoken" value="{{ request.cookies.get('csrftoken', '') }}">
+        <input type="hidden" name="csrftoken" value="{{ request.scope.get('csrftoken', '') }}">
         <input type="hidden" name="email" value="{{ email }}">
         <div>
             <label for="verify-code" class="block text-sm font-bold text-dark mb-2 uppercase tracking-wider">Код подтверждения</label>
