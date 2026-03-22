@@ -1,4 +1,4 @@
-/* HobbyHeaven — shared utilities */
+/* HobbyHold — shared utilities */
 
 function previewImage(input, previewId) {
     var preview = document.getElementById(previewId);

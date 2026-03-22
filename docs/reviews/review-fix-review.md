@@ -1,4 +1,4 @@
-# Code Review: Полный аудит проекта HobbyHeaven
+# Code Review: Полный аудит проекта HobbyHold
 
 **Branch:** `fix/review`
 **Base:** `main`
@@ -32,7 +32,7 @@
 ### S2. Захардкоженные креденшалы БД
 **Category:** Security
 **File:** `database.py:18`
-**Issue:** `DATABASE_URL = "postgresql://draculushka:secure_password@db/hobbyheaven"` — пароль в исходном коде попадает в git-историю.
+**Issue:** `DATABASE_URL = "postgresql://draculushka:secure_password@db/hobbyhold"` — пароль в исходном коде попадает в git-историю.
 **Fix:** `DATABASE_URL = os.environ["DATABASE_URL"]` — обязательная переменная окружения.
 
 ### S3. Отсутствие CSRF-защиты

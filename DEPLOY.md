@@ -1,6 +1,6 @@
 # Руководство по развертыванию (Deployment)
 
-Это руководство предназначено для запуска проекта HobbyHeaven на сервере (например, VPS с Ubuntu).
+Это руководство предназначено для запуска проекта HobbyHold на сервере (например, VPS с Ubuntu).
 
 ---
 
@@ -20,8 +20,8 @@ sudo systemctl enable --now docker
 ## 2. Клонирование и настройка
 
 ```bash
-git clone https://github.com/yourusername/hobbyheaven.git
-cd hobbyheaven
+git clone https://github.com/yourusername/hobbyhold.git
+cd hobbyhold
 ```
 
 ### Настройка переменных окружения:
@@ -31,9 +31,9 @@ cd hobbyheaven
 ```bash
 POSTGRES_USER=hobby_user
 POSTGRES_PASSWORD=ваш_надежный_пароль
-POSTGRES_DB=hobbyheaven
+POSTGRES_DB=hobbyhold
 SECRET_KEY=длинная_случайная_строка
-DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db/hobbyheaven
+DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db/hobbyhold
 ```
 
 ---

@@ -1,4 +1,4 @@
-# UI Review: Все шаблоны HobbyHeaven
+# UI Review: Все шаблоны HobbyHold
 
 **Date:** 2026-03-22
 **Scope:** Все 8 шаблонов в `templates/`
@@ -160,7 +160,7 @@ document.addEventListener('keydown', e => {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}HobbyHeaven{% endblock %}</title>
+    <title>{% block title %}HobbyHold{% endblock %}</title>
     <link rel="icon" type="image/svg+xml" href="...">
     <link rel="stylesheet" href="/static/output.css">
     {% block head %}{% endblock %}

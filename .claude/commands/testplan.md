@@ -612,7 +612,7 @@ Never export internal helpers, private methods, or module internals solely for t
 
 ## Project-Specific Test Patterns
 
-### Python — FastAPI + SQLAlchemy (HobbyHeaven)
+### Python — FastAPI + SQLAlchemy (HobbyHold)
 
 ```python
 import pytest

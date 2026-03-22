@@ -1,4 +1,4 @@
-# Code Review: Полный проект HobbyHeaven
+# Code Review: Полный проект HobbyHold
 
 **Date:** 2026-03-22
 **Scope:** Весь проект (все слои, все файлы)
