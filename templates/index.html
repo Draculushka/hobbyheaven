@@ -261,24 +261,23 @@
                             <!-- Обычный лайк (Сердечко) -->
                             {% set heart_count = hobby.reactions | selectattr('emoji_type', 'equalto', 'heart') | list | length %}
                             {% set my_heart = hobby.reactions | selectattr('persona_id', 'in', user_persona_ids) | selectattr('emoji_type', 'equalto', 'heart') | first %}
-                            <button onclick="toggleLike({{ hobby.id }}, 'heart')" 
+                            <button id="btn-reaction-{{ hobby.id }}-heart" onclick="toggleLike(this, {{ hobby.id }}, 'heart')"
+                                    data-active="{{ 'true' if my_heart else 'false' }}"
                                     class="flex items-center gap-2 px-4 py-2 {{ 'bg-red-50 text-danger' if my_heart else 'bg-surface text-muted' }} rounded-full hover:scale-105 transition-all group">
-                                <span class="text-base {{ 'filter-none' if my_heart else 'grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100' }}">❤️</span>
-                                <span class="text-sm font-bold">{{ heart_count }}</span>
+                                <span id="icon-reaction-{{ hobby.id }}-heart" class="text-base {{ 'filter-none' if my_heart else 'grayscale opacity-50 group-hover:grayscale-0 group-hover:opacity-100' }}">❤️</span>
+                                <span id="count-reaction-{{ hobby.id }}-heart" class="text-sm font-bold">{{ heart_count }}</span>
                             </button>
-
                             <!-- Премиум лайки -->
                             {% for emo in ['fire', 'rocket', 'star'] %}
                                 {% set emo_icon = {'fire': '🔥', 'rocket': '🚀', 'star': '⭐'}[emo] %}
                                 {% set emo_count = hobby.reactions | selectattr('emoji_type', 'equalto', emo) | list | length %}
                                 {% set my_emo = hobby.reactions | selectattr('persona_id', 'in', user_persona_ids) | selectattr('emoji_type', 'equalto', emo) | first %}
-                                <button onclick="toggleLike({{ hobby.id }}, '{{ emo }}')" 
+                                <button id="btn-reaction-{{ hobby.id }}-{{ emo }}" onclick="toggleLike(this, {{ hobby.id }}, '{{ emo }}')" 
+                                        data-active="{{ 'true' if my_emo else 'false' }}"
                                         class="flex items-center gap-2 px-4 py-2 {{ 'bg-blue-50 ring-1 ring-blue-100' if my_emo else 'bg-surface' }} rounded-full hover:scale-105 transition-all group"
                                         title="{{ 'Стоит 1 токен' if user and user.is_premium else 'Нужен Premium' }}">
-                                    <span class="text-base {{ 'filter-none' if my_emo else 'grayscale opacity-40 group-hover:grayscale-0 group-hover:opacity-100' }}">{{ emo_icon }}</span>
-                                    {% if emo_count > 0 %}
-                                    <span class="text-sm font-bold text-muted">{{ emo_count }}</span>
-                                    {% endif %}
+                                    <span id="icon-reaction-{{ hobby.id }}-{{ emo }}" class="text-base {{ 'filter-none' if my_emo else 'grayscale opacity-40 group-hover:grayscale-0 group-hover:opacity-100' }}">{{ emo_icon }}</span>
+                                    <span id="count-reaction-{{ hobby.id }}-{{ emo }}" class="text-sm font-bold text-muted">{{ emo_count }}</span>
                                 </button>
                             {% endfor %}
 
@@ -380,7 +379,54 @@
     }).catch(error => console.error(error));
     {% endif %}
 
-    async function toggleLike(hobbyId, emojiType = 'heart') {
+    async function toggleLike(buttonElement, hobbyId, emojiType = 'heart') {
+        const iconSpan = document.getElementById(`icon-reaction-${hobbyId}-${emojiType}`);
+        const countSpan = document.getElementById(`count-reaction-${hobbyId}-${emojiType}`);
+
+        const isActive = buttonElement.getAttribute('data-active') === 'true';
+        let currentCount = parseInt(countSpan.textContent) || 0;
+
+        // --- OPTIMISTIC UI UPDATE ---
+        // Save previous state to revert if needed
+        const prevActive = isActive;
+        const prevCount = currentCount;
+
+        // Apply new state immediately
+        const newActive = !isActive;
+        buttonElement.setAttribute('data-active', newActive ? 'true' : 'false');
+
+        if (emojiType === 'heart') {
+            if (newActive) {
+                buttonElement.classList.remove('bg-surface', 'text-muted');
+                buttonElement.classList.add('bg-red-50', 'text-danger');
+                iconSpan.classList.remove('grayscale', 'opacity-50', 'group-hover:grayscale-0', 'group-hover:opacity-100');
+                iconSpan.classList.add('filter-none');
+                countSpan.textContent = currentCount + 1;
+            } else {
+                buttonElement.classList.remove('bg-red-50', 'text-danger');
+                buttonElement.classList.add('bg-surface', 'text-muted');
+                iconSpan.classList.remove('filter-none');
+                iconSpan.classList.add('grayscale', 'opacity-50', 'group-hover:grayscale-0', 'group-hover:opacity-100');
+                countSpan.textContent = Math.max(0, currentCount - 1);
+            }
+        } else {
+            // Premium emojis
+            if (newActive) {
+                buttonElement.classList.remove('bg-surface');
+                buttonElement.classList.add('bg-blue-50', 'ring-1', 'ring-blue-100');
+                iconSpan.classList.remove('grayscale', 'opacity-40', 'group-hover:grayscale-0', 'group-hover:opacity-100');
+                iconSpan.classList.add('filter-none');
+                countSpan.textContent = currentCount + 1;
+            } else {
+                buttonElement.classList.remove('bg-blue-50', 'ring-1', 'ring-blue-100');
+                buttonElement.classList.add('bg-surface');
+                iconSpan.classList.remove('filter-none');
+                iconSpan.classList.add('grayscale', 'opacity-40', 'group-hover:grayscale-0', 'group-hover:opacity-100');
+                countSpan.textContent = Math.max(0, currentCount - 1);
+            }
+        }
+
+        // --- SERVER REQUEST ---
         try {
             const response = await fetch(`/api/v1/hobbies/${hobbyId}/reactions`, {
                 method: 'POST',
@@ -389,16 +435,44 @@
                 },
                 body: JSON.stringify({ emoji_type: emojiType })
             });
-            
+
             if (response.status === 401) {
                 window.location.href = '/login';
                 return;
             }
 
-            if (response.ok) {
-                // Для простоты обновляем страницу, чтобы увидеть списанные токены и новую иконку
-                location.reload();
-            } else {
+            if (!response.ok) {
+                // REVERT UI ON FAILURE
+                buttonElement.setAttribute('data-active', prevActive ? 'true' : 'false');
+                countSpan.textContent = prevCount;
+
+                // Toggle classes back
+                if (emojiType === 'heart') {
+                    if (prevActive) {
+                        buttonElement.classList.remove('bg-surface', 'text-muted');
+                        buttonElement.classList.add('bg-red-50', 'text-danger');
+                        iconSpan.classList.remove('grayscale', 'opacity-50', 'group-hover:grayscale-0', 'group-hover:opacity-100');
+                        iconSpan.classList.add('filter-none');
+                    } else {
+                        buttonElement.classList.remove('bg-red-50', 'text-danger');
+                        buttonElement.classList.add('bg-surface', 'text-muted');
+                        iconSpan.classList.remove('filter-none');
+                        iconSpan.classList.add('grayscale', 'opacity-50', 'group-hover:grayscale-0', 'group-hover:opacity-100');
+                    }
+                } else {
+                    if (prevActive) {
+                        buttonElement.classList.remove('bg-surface');
+                        buttonElement.classList.add('bg-blue-50', 'ring-1', 'ring-blue-100');
+                        iconSpan.classList.remove('grayscale', 'opacity-40', 'group-hover:grayscale-0', 'group-hover:opacity-100');
+                        iconSpan.classList.add('filter-none');
+                    } else {
+                        buttonElement.classList.remove('bg-blue-50', 'ring-1', 'ring-blue-100');
+                        buttonElement.classList.add('bg-surface');
+                        iconSpan.classList.remove('filter-none');
+                        iconSpan.classList.add('grayscale', 'opacity-40', 'group-hover:grayscale-0', 'group-hover:opacity-100');
+                    }
+                }
+
                 const error = await response.json();
                 alert(error.detail || 'Ошибка при установке реакции');
             }
@@ -406,7 +480,6 @@
             console.error('Like error:', e);
         }
     }
-
     async function editComment(commentId, currentText) {
         const newText = prompt("Редактировать комментарий:", currentText);
         if (newText === null || newText.trim() === "" || newText === currentText) return;
