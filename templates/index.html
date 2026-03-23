@@ -197,6 +197,11 @@
                         Фото
                         <input type="file" name="image" class="hidden" accept="image/*" onchange="previewImage(this, 'createPreview')">
                     </label>
+                    <label class="cursor-pointer bg-surface hover:bg-orange-50 text-muted hover:text-primary px-6 py-3 rounded-2xl transition-all flex items-center gap-2 font-bold text-sm">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+                        Видео
+                        <input type="file" name="video" class="hidden" accept="video/*">
+                    </label>
                     <label for="hobby-tags" class="sr-only">Теги</label>
                     <input id="hobby-tags" type="text" name="tags_input" placeholder="Теги (через запятую)" class="bg-surface border-none rounded-2xl px-6 py-3 text-sm focus:ring-2 focus:ring-orange-100 outline-none w-48 font-medium">
                 </div>
@@ -216,14 +221,20 @@
         {% for hobby in hobbies %}
         <article class="post-card bg-white rounded-card-lg border border-border overflow-hidden group">
             <div class="flex flex-col md:flex-row {{ 'md:flex-row-reverse' if loop.index0 % 2 == 1 }}">
-                {% if hobby.image_path %}
+                {% if hobby.video_path %}
+                <div class="md:w-5/12 relative aspect-[4/3] md:aspect-[3/4] bg-dark">
+                    <video-js id="video-{{ hobby.id }}" class="vjs-theme-city vjs-big-play-centered w-full h-full" controls preload="auto" width="100%" height="100%">
+                        <source src="{{ hobby.video_path }}" type="application/x-mpegURL">
+                    </video-js>
+                </div>
+                {% elif hobby.image_path %}
                 <div class="md:w-5/12 relative overflow-hidden aspect-[4/3] md:aspect-[3/4]">
-                    <img src="/uploads/{{ hobby.image_path }}" alt="{{ hobby.title }}" loading="lazy"
+                    <img src="{% if hobby.image_path.startswith('http') %}{{ hobby.image_path }}{% else %}/uploads/{{ hobby.image_path }}{% endif %}" alt="{{ hobby.title }}" loading="lazy"
                          class="absolute inset-0 w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 cursor-pointer"
                          onclick="openImage(this.src)" tabindex="0" role="button" onkeydown="if(event.key==='Enter')openImage(this.src)">
                 </div>
                 {% endif %}
-                <div class="p-8 md:p-14 {{ 'md:w-7/12' if hobby.image_path else 'w-full' }} flex flex-col justify-between">
+                <div class="p-8 md:p-14 {{ 'md:w-7/12' if (hobby.image_path or hobby.video_path) else 'w-full' }} flex flex-col justify-between">
                     <div>
                         <div class="flex justify-between items-center mb-8">
                             <span class="px-4 py-1.5 bg-orange-50 text-primary rounded-full text-[10px] font-bold uppercase tracking-widest font-sans">{{ hobby.title }}</span>
@@ -233,7 +244,7 @@
                         <div class="flex items-center gap-3 mb-6">
                             <a href="/profile/{{ hobby.author_persona.username }}" class="flex-shrink-0 group/avatar" aria-label="Профиль {{ hobby.author_persona.username }}">
                                 {% if hobby.author_persona.avatar_path %}
-                                <img src="/uploads/{{ hobby.author_persona.avatar_path }}" alt="{{ hobby.author_persona.username }}" loading="lazy"
+                                <img src="{% if hobby.author_persona.avatar_path.startswith('http') %}{{ hobby.author_persona.avatar_path }}{% else %}/uploads/{{ hobby.author_persona.avatar_path }}{% endif %}" alt="{{ hobby.author_persona.username }}" loading="lazy"
                                      class="w-10 h-10 rounded-full object-cover border border-border group-hover/avatar:border-primary transition-colors" width="40" height="40">
                                 {% else %}
                                 <div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-bold text-sm shadow-sm group-hover/avatar:scale-110 transition-transform">{{ hobby.author_persona.username[0].upper() }}</div>
@@ -344,28 +355,12 @@
     </div>
 
     <!-- Pagination -->
-    {% if total_pages > 1 %}
-    <nav class="mt-16 flex items-center justify-center gap-2" aria-label="Пагинация">
-        {% if page > 1 %}
-        <a href="/?page={{ page - 1 }}{% if search %}&search={{ search }}{% endif %}" class="px-4 py-2 bg-white border border-border rounded-2xl text-sm font-bold text-muted hover:text-primary hover:border-primary transition-all">
-            &larr; Назад
+    {% if next_cursor %}
+    <div class="mt-16 flex justify-center">
+        <a href="/?cursor={{ next_cursor }}{% if search %}&search={{ search }}{% endif %}" class="px-8 py-3 bg-white border border-border rounded-2xl text-sm font-bold text-dark hover:text-primary hover:border-primary shadow-sm hover:shadow-md transition-all">
+            Загрузить еще
         </a>
-        {% endif %}
-        {% for p in range(1, total_pages + 1) %}
-            {% if p == page %}
-            <span class="px-4 py-2 bg-primary text-white rounded-2xl text-sm font-bold">{{ p }}</span>
-            {% elif p == 1 or p == total_pages or (p >= page - 2 and p <= page + 2) %}
-            <a href="/?page={{ p }}{% if search %}&search={{ search }}{% endif %}" class="px-4 py-2 bg-white border border-border rounded-2xl text-sm font-bold text-muted hover:text-primary hover:border-primary transition-all">{{ p }}</a>
-            {% elif p == page - 3 or p == page + 3 %}
-            <span class="px-2 text-subtle">&hellip;</span>
-            {% endif %}
-        {% endfor %}
-        {% if page < total_pages %}
-        <a href="/?page={{ page + 1 }}{% if search %}&search={{ search }}{% endif %}" class="px-4 py-2 bg-white border border-border rounded-2xl text-sm font-bold text-muted hover:text-primary hover:border-primary transition-all">
-            Вперёд &rarr;
-        </a>
-        {% endif %}
-    </nav>
+    </div>
     {% endif %}
 </div>
 

@@ -16,6 +16,13 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
+# --- S3 Object Storage ---
+S3_ENDPOINT = os.getenv("S3_ENDPOINT", "http://localhost:9000")
+S3_ACCESS_KEY = os.getenv("S3_ACCESS_KEY", "minioadmin")
+S3_SECRET_KEY = os.getenv("S3_SECRET_KEY", "minioadmin")
+S3_BUCKET = os.getenv("S3_BUCKET", "hobbyhold")
+S3_PUBLIC_URL = os.getenv("S3_PUBLIC_URL", "http://localhost:9000/hobbyhold")
+
 ALLOWED_TAGS = ['b', 'i', 'em', 'strong', 'a', 'ul', 'ol', 'li', 'p', 'br', 'h2', 'h3', 'blockquote']
 ALLOWED_ATTRS = {'a': ['href', 'title', 'target']}
 ALLOWED_PROTOCOLS = ['http', 'https', 'mailto']

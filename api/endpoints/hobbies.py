@@ -16,7 +16,7 @@ router = APIRouter()
 @router.get("/")
 def home(
     request: Request,
-    page: int = 1,
+    cursor: Optional[int] = None,
     search: str = "",
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
@@ -31,10 +31,10 @@ def home(
 
     limit = 10
 
-    hobbies, total_pages = hobby_service.search_hobbies(db, search, page, limit)
+    hobbies, next_cursor = hobby_service.search_hobbies(db, search, cursor, limit)
     return templates.TemplateResponse(
         "index.html",
-        {"request": request, "hobbies": hobbies, "page": page, "total_pages": total_pages, "search": search, "user": current_user}
+        {"request": request, "hobbies": hobbies, "next_cursor": next_cursor, "search": search, "user": current_user}
     )
 
 
@@ -53,6 +53,7 @@ def create_hobby(
     tags_input: str = Form("", max_length=500),
     persona_id: Optional[int] = Form(None),
     image: UploadFile = File(None),
+    video: UploadFile = File(None),
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
@@ -78,7 +79,7 @@ def create_hobby(
         if not persona:
             raise HTTPException(status_code=403, detail="Invalid persona")
 
-    hobby_service.create_hobby(db, persona_id, title, description, tags_input, image)
+    hobby_service.create_hobby(db, persona_id, title, description, tags_input, image, video)
     return RedirectResponse("/", status_code=status.HTTP_303_SEE_OTHER)
 
 

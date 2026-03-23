@@ -7,8 +7,33 @@ from models import Hobby, Tag, Comment, Reaction
 from core.config import UPLOAD_DIR
 from core.templates import sanitize_html
 
-ALLOWED_EXTENSIONS = {'.jpg', '.jpeg', '.png', '.gif', '.webp'}
-MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
+ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp"}
+ALLOWED_VIDEO_EXTENSIONS = {".mp4", ".mov", ".avi", ".mkv"}
+MAX_FILE_SIZE = 5 * 1024 * 1024  # 5 MB
+MAX_VIDEO_SIZE = 50 * 1024 * 1024 # 50 MB (для примера)
+
+from services.video_service import process_video_hls
+
+def save_upload_video(file) -> str | None:
+    if not file or not file.filename:
+        return None
+    ext = os.path.splitext(file.filename)[1].lower()
+    if ext not in ALLOWED_VIDEO_EXTENSIONS:
+        raise HTTPException(status_code=400, detail="Недопустимый формат видео.")
+
+    # Сохраняем оригинал временно для обработки
+    filename = f"raw_{uuid.uuid4().hex}{ext}"
+    path = UPLOAD_DIR / filename
+
+    content = file.file.read()
+    if len(content) > MAX_VIDEO_SIZE:
+        raise HTTPException(status_code=400, detail="Видео слишком тяжелое. Максимум 50 МБ")
+
+    with open(path, "wb") as f:
+        f.write(content)
+
+    return filename
+
 
 MAGIC_BYTES = {
     b'\xff\xd8\xff': '.jpg',
@@ -31,6 +56,7 @@ def _check_magic_bytes(content: bytes, ext: str) -> bool:
 def sanitize_description(description: str) -> str:
     return str(sanitize_html(description))
 
+from services.s3_service import upload_file_to_s3, delete_file_from_s3
 
 def save_upload_image(file) -> str | None:
     if not file or not file.filename:
@@ -44,19 +70,30 @@ def save_upload_image(file) -> str | None:
         raise HTTPException(status_code=400, detail="Файл слишком большой. Максимум 5 МБ")
     if not _check_magic_bytes(content, ext):
         raise HTTPException(status_code=400, detail="Содержимое файла не соответствует формату")
+
     file.file.seek(0)
     filename = f"{uuid.uuid4().hex}{ext}"
-    path = UPLOAD_DIR / filename
-    with open(path, "wb") as f:
-        f.write(content)
-    return filename
+
+    # Upload to S3 instead of local disk
+    # We pass the content type based on the file type provided by FastAPI (or fallback)
+    content_type = file.content_type if hasattr(file, "content_type") else None
+
+    # upload_file_to_s3 returns the full public URL, which is what we will now store in the DB
+    public_url = upload_file_to_s3(file.file, filename, content_type)
+    return public_url
 
 
-def delete_image(filename: str):
-    if not filename:
+def delete_image(image_url: str):
+    if not image_url:
         return
-    if '..' in filename or '/' in filename:
-        return
+
+    # If it's a full URL, extract just the object name (filename)
+    if image_url.startswith("http"):
+        filename = image_url.split("/")[-1]
+    else:
+        filename = image_url
+
+    delete_file_from_s3(filename)
     path = UPLOAD_DIR / filename
     if path.is_file():
         path.unlink()
@@ -79,8 +116,9 @@ def process_tags(db: Session, tags_input: str, max_tags: int = 10) -> list[Tag]:
     return tags
 
 
-def create_hobby(db: Session, persona_id: int, title: str, description: str, tags_input: str, image) -> Hobby:
+def create_hobby(db: Session, persona_id: int, title: str, description: str, tags_input: str, image, video=None) -> Hobby:
     image_filename = save_upload_image(image)
+    video_filename = save_upload_video(video)
     clean_description = sanitize_description(description)
 
     hobby = Hobby(
@@ -94,6 +132,12 @@ def create_hobby(db: Session, persona_id: int, title: str, description: str, tag
     db.add(hobby)
     db.commit()
     db.refresh(hobby)
+    
+    # Если загружено видео — запускаем асинхронную обработку
+    if video_filename:
+        # Задача Celery для транскодирования видео в HLS
+        process_video_hls.delay(hobby.id, video_filename)
+        
     return hobby
 
 
@@ -119,14 +163,13 @@ def delete_hobby(db: Session, hobby: Hobby):
     db.commit()
 
 
-def search_hobbies(db: Session, search: str, page: int, limit: int):
-    """Returns (hobbies, total_pages)"""
-    from models import Hobby, Persona, User
+def search_hobbies(db: Session, search: str, cursor: int | None, limit: int):
+    """Returns (hobbies, next_cursor)"""
+    from models import Hobby, Persona, User, Comment, Reaction
     from core.config import HOBBY_SYNONYMS
+    from sqlalchemy.orm import joinedload
 
-    page = max(1, page)
     limit = max(1, min(limit, 100))
-    offset = (page - 1) * limit
     query = db.query(Hobby).join(Persona, Hobby.persona_id == Persona.id).join(Persona.user).filter(User.deleted_at.is_(None))
 
     if search:
@@ -136,8 +179,9 @@ def search_hobbies(db: Session, search: str, page: int, limit: int):
         filters = [Hobby.title.ilike(f"%{term}%") for term in escaped_terms]
         query = query.filter(or_(*filters))
 
-    total = query.count()
-    total_pages = max(1, (total + limit - 1) // limit)
+    if cursor:
+        query = query.filter(Hobby.id < cursor)
+
     hobbies = (query
         .options(
             joinedload(Hobby.author_persona), 
@@ -145,9 +189,11 @@ def search_hobbies(db: Session, search: str, page: int, limit: int):
             joinedload(Hobby.comments).joinedload(Comment.author_persona),
             joinedload(Hobby.reactions).joinedload(Reaction.author_persona)
         )
-        .order_by(Hobby.created_at.desc())
-        .offset(offset).limit(limit).all())
-    return hobbies, total_pages
+        .order_by(Hobby.id.desc())
+        .limit(limit).all())
+        
+    next_cursor = hobbies[-1].id if hobbies and len(hobbies) == limit else None
+    return hobbies, next_cursor
 
 
 def get_random_hobby_title(db: Session) -> str | None:

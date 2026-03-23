@@ -50,7 +50,7 @@
                         {% set is_active = (persona.id == user.active_persona_id) %}
                         <div class="flex items-center gap-4 p-4 rounded-2xl border transition-all duration-300 {{ 'border-[#FFD700] bg-yellow-50/30 shadow-[0_0_15px_rgba(255,215,0,0.1)]' if is_active else 'border-border bg-surface' }}">
                             {% if persona.avatar_path %}
-                            <img src="/uploads/{{ persona.avatar_path }}" alt="{{ persona.username }}" class="w-12 h-12 rounded-full object-cover {{ 'ring-2 ring-[#FFD700]' if is_active else '' }}" width="48" height="48" loading="lazy">
+                            <img src="{% if persona.avatar_path.startswith('http') %}{{ persona.avatar_path }}{% else %}/uploads/{{ persona.avatar_path }}{% endif %}" alt="{{ persona.username }}" class="w-12 h-12 rounded-full object-cover {{ 'ring-2 ring-[#FFD700]' if is_active else '' }}" width="48" height="48" loading="lazy">
                             {% else %}
                             <div class="w-12 h-12 {{ 'bg-[#FFD700]' if is_active else 'bg-dark' }} rounded-full flex items-center justify-center text-white font-bold">{{ persona.username[0].upper() }}</div>
                             {% endif %}
@@ -131,7 +131,7 @@
                 {% for hobby in hobbies %}
                 <article class="bg-white rounded-card p-6 border border-border flex flex-col sm:flex-row gap-4 sm:gap-6 group hover:shadow-lg transition-all">
                     {% if hobby.image_path %}
-                    <img src="/uploads/{{ hobby.image_path }}" alt="{{ hobby.title }}" loading="lazy"
+                    <img src="{% if hobby.image_path.startswith('http') %}{{ hobby.image_path }}{% else %}/uploads/{{ hobby.image_path }}{% endif %}" alt="{{ hobby.title }}" loading="lazy"
                          class="w-full h-48 sm:w-32 sm:h-32 rounded-2xl object-cover flex-shrink-0" width="128" height="128">
                     {% else %}
                     <div class="w-full h-48 sm:w-32 sm:h-32 bg-surface rounded-2xl flex items-center justify-center text-subtle flex-shrink-0">

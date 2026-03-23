@@ -82,7 +82,7 @@
                         </label>
 
                         <div id="editPreviewContainer" class="{% if not hobby.image_path %}hidden{% endif %} relative">
-                            <img id="editPreview" src="{% if hobby.image_path %}/uploads/{{ hobby.image_path }}{% endif %}"
+                            <img id="editPreview" src="{% if hobby.image_path %}{% if hobby.image_path.startswith('http') %}{{ hobby.image_path }}{% else %}/uploads/{{ hobby.image_path }}{% endif %}{% endif %}"
                                  alt="Предпросмотр" class="w-16 h-16 object-cover rounded-xl border-2 border-primary-dark shadow-sm" width="64" height="64">
                         </div>
                     </div>

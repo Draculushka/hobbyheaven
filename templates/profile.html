@@ -28,7 +28,7 @@
     <header class="bg-white rounded-card-lg p-8 md:p-12 border border-border shadow-sm mb-12 flex flex-col md:flex-row items-center gap-8 md:gap-12">
         <div class="flex-shrink-0">
             {% if persona.avatar_path %}
-            <img src="/uploads/{{ persona.avatar_path }}" alt="{{ persona.username }}"
+            <img src="{% if persona.avatar_path.startswith('http') %}{{ persona.avatar_path }}{% else %}/uploads/{{ persona.avatar_path }}{% endif %}" alt="{{ persona.username }}"
                  class="w-32 h-32 md:w-48 md:h-48 rounded-full object-cover border-4 border-white shadow-xl" width="192" height="192">
             {% else %}
             <div class="w-32 h-32 md:w-48 md:h-48 bg-primary rounded-full flex items-center justify-center text-white text-5xl md:text-7xl font-bold shadow-xl">
@@ -72,7 +72,7 @@
             <article class="bg-white rounded-card overflow-hidden border border-border group hover:shadow-xl transition-all duration-500">
                 <div class="relative aspect-[4/3] overflow-hidden">
                     {% if hobby.image_path %}
-                    <img src="/uploads/{{ hobby.image_path }}" alt="{{ hobby.title }}" loading="lazy"
+                    <img src="{% if hobby.image_path.startswith('http') %}{{ hobby.image_path }}{% else %}/uploads/{{ hobby.image_path }}{% endif %}" alt="{{ hobby.title }}" loading="lazy"
                          class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" width="400" height="300">
                     {% else %}
                     <div class="w-full h-full bg-surface flex items-center justify-center text-subtle">
