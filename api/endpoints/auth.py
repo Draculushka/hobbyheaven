@@ -26,8 +26,10 @@ def register_user(
     password: str = Form(..., min_length=6, max_length=64),
     db: Session = Depends(get_db)
 ):
-    if auth_service.get_persona_by_username(db, username) or auth_service.get_user_by_email(db, email):
-        return RedirectResponse("/register?error=Не удалось создать аккаунт. Проверьте данные.", status_code=status.HTTP_303_SEE_OTHER)
+    if auth_service.get_persona_by_username(db, username):
+        return RedirectResponse("/register?error=Этот Никнейм уже занят", status_code=status.HTTP_303_SEE_OTHER)
+    if auth_service.get_user_by_email(db, email):
+        return RedirectResponse("/register?error=Эта Почта уже зарегистрирована", status_code=status.HTTP_303_SEE_OTHER)
 
     auth_service.create_user(db, username, email, password)
     code = auth_service.request_verification_code(email)
