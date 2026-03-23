@@ -31,7 +31,7 @@ def upload_file_to_s3(file_obj, object_name: str, content_type: str = None) -> s
             object_name,
             ExtraArgs=extra_args
         )
-        
+
         # Determine the public URL (direct S3 or CDN)
         if CDN_URL:
             # If CDN_URL is set, we assume it serves the bucket directly

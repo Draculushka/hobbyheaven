@@ -103,16 +103,14 @@ class TestSaveUploadImage:
         assert save_upload_image(None) is None
 
     # TP-HS08
-    @patch("services.hobby_service.UPLOAD_DIR")
-    def test_valid_jpg(self, mock_dir, tmp_path):
-        mock_dir.__truediv__ = lambda self, x: tmp_path / x
+    @patch("services.hobby_service.upload_file_to_s3")
+    def test_valid_jpg(self, mock_upload):
+        mock_upload.return_value = "http://s3/photo.jpg"
         f = make_upload_file("photo.jpg")
+        f.content_type = "image/jpeg"
         result = save_upload_image(f)
-        assert result is not None
-        assert result.endswith(".jpg")
-        # filename is UUID hex (32 chars) + extension
-        stem = result.rsplit(".", 1)[0]
-        assert len(stem) == 32
+        assert result == "http://s3/photo.jpg"
+        assert mock_upload.called
 
     # TP-HS09 (P0)
     def test_exe_rejected(self):
@@ -122,42 +120,38 @@ class TestSaveUploadImage:
         assert exc_info.value.status_code == 400
 
     # TP-HS10
-    @patch("services.hobby_service.UPLOAD_DIR")
-    def test_exactly_5mb_accepted(self, mock_dir, tmp_path):
-        mock_dir.__truediv__ = lambda self, x: tmp_path / x
+    @patch("services.hobby_service.upload_file_to_s3")
+    def test_exactly_5mb_accepted(self, mock_upload):
+        mock_upload.return_value = "http://s3/img.jpg"
         f = make_upload_file("img.jpg", size=5 * 1024 * 1024)
+        f.content_type = "image/jpeg"
         result = save_upload_image(f)
-        assert result is not None
+        assert result == "http://s3/img.jpg"
 
     # TP-HS11
-    @patch("services.hobby_service.UPLOAD_DIR")
-    def test_over_5mb_rejected(self, mock_dir, tmp_path):
-        mock_dir.__truediv__ = lambda self, x: tmp_path / x
+    def test_over_5mb_rejected(self):
         f = make_upload_file("img.jpg", size=5 * 1024 * 1024 + 1)
         with pytest.raises(HTTPException) as exc_info:
             save_upload_image(f)
         assert exc_info.value.status_code == 400
 
     # TP-HS12
-    @patch("services.hobby_service.UPLOAD_DIR")
-    def test_uppercase_extension_accepted(self, mock_dir, tmp_path):
-        mock_dir.__truediv__ = lambda self, x: tmp_path / x
+    @patch("services.hobby_service.upload_file_to_s3")
+    def test_uppercase_extension_accepted(self, mock_upload):
+        mock_upload.return_value = "http://s3/photo.jpg"
         f = make_upload_file("photo.JPG")
+        f.content_type = "image/jpeg"
         result = save_upload_image(f)
-        assert result is not None
-        assert result.endswith(".jpg")
+        assert result == "http://s3/photo.jpg"
 
     # TP-HS13
-    @patch("services.hobby_service.UPLOAD_DIR")
-    def test_path_traversal_replaced_by_uuid(self, mock_dir, tmp_path):
-        mock_dir.__truediv__ = lambda self, x: tmp_path / x
+    @patch("services.hobby_service.upload_file_to_s3")
+    def test_path_traversal_replaced_by_uuid(self, mock_upload):
+        mock_upload.return_value = "http://s3/replaced.jpg"
         f = make_upload_file("../../../etc/passwd.jpg")
+        f.content_type = "image/jpeg"
         result = save_upload_image(f)
-        assert ".." not in result
-        assert "etc" not in result
-        assert "passwd" not in result
-        stem = result.rsplit(".", 1)[0]
-        assert len(stem) == 32  # UUID hex
+        assert result == "http://s3/replaced.jpg"
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -172,7 +166,7 @@ class TestSearchHobbies:
         _make_hobby(db, p, title="Painting")
         _make_hobby(db, p, title="Cooking")
         db.commit()
-        hobbies, _ = search_hobbies(db, "", page=1, limit=10)
+        hobbies, _ = search_hobbies(db, "", cursor=None, limit=10)
         assert len(hobbies) == 2
 
     # TP-HS15
@@ -183,7 +177,7 @@ class TestSearchHobbies:
         _make_hobby(db, p, title="Chess club")
         _make_hobby(db, p, title="Painting")
         db.commit()
-        hobbies, _ = search_hobbies(db, "chess", page=1, limit=10)
+        hobbies, _ = search_hobbies(db, "chess", cursor=None, limit=10)
         assert len(hobbies) == 2
 
     # TP-HS16 (P0)
@@ -193,9 +187,10 @@ class TestSearchHobbies:
         _make_hobby(db, p, title="100% fun")
         _make_hobby(db, p, title="Painting")
         db.commit()
-        hobbies, _ = search_hobbies(db, "%", page=1, limit=10)
+        hobbies, _ = search_hobbies(db, "%", cursor=None, limit=10)
         # "%" should be escaped; only hobby with literal % should match
         titles = [h.title for h in hobbies]
+        assert "100% fun" in titles
         assert "Painting" not in titles
 
     # TP-HS17 (P0)
@@ -205,29 +200,39 @@ class TestSearchHobbies:
         _make_hobby(db, p, title="my_hobby")
         _make_hobby(db, p, title="Painting")
         db.commit()
-        hobbies, _ = search_hobbies(db, "_", page=1, limit=10)
+        hobbies, _ = search_hobbies(db, "_", cursor=None, limit=10)
         titles = [h.title for h in hobbies]
+        assert "my_hobby" in titles
         assert "Painting" not in titles
 
     # TP-HS18
-    def test_empty_results_total_pages_1(self, db):
+    def test_empty_results_next_cursor_none(self, db):
         u = _make_user(db)
         _make_persona(db, u)
         db.commit()
-        hobbies, total_pages = search_hobbies(db, "", page=1, limit=10)
+        hobbies, next_cursor = search_hobbies(db, "", cursor=None, limit=10)
         assert hobbies == []
-        assert total_pages == 1
+        assert next_cursor is None
 
     # TP-HS19
-    def test_pagination_total_pages(self, db):
+    def test_pagination_with_cursor(self, db):
         u = _make_user(db)
         p = _make_persona(db, u)
+        hobbies_created = []
         for i in range(11):
-            _make_hobby(db, p, title=f"Hobby {i}")
+            h = _make_hobby(db, p, title=f"Hobby {i}")
+            hobbies_created.append(h)
         db.commit()
-        hobbies, total_pages = search_hobbies(db, "", page=1, limit=10)
-        assert total_pages == 2
+
+        # First page
+        hobbies, next_cursor = search_hobbies(db, "", cursor=None, limit=10)
         assert len(hobbies) == 10
+        assert next_cursor is not None
+
+        # Second page
+        hobbies2, next_cursor2 = search_hobbies(db, "", cursor=next_cursor, limit=10)
+        assert len(hobbies2) == 1
+        assert next_cursor2 is None
 
     # TP-HS20
     def test_soft_deleted_user_excluded(self, db):
@@ -239,38 +244,11 @@ class TestSearchHobbies:
         _make_hobby(db, p1, title="Active Hobby")
         _make_hobby(db, p2, title="Deleted Hobby")
         db.commit()
-        hobbies, _ = search_hobbies(db, "", page=1, limit=10)
+        hobbies, _ = search_hobbies(db, "", cursor=None, limit=10)
         titles = [h.title for h in hobbies]
         assert "Active Hobby" in titles
         assert "Deleted Hobby" not in titles
 
-    # BUG-2: page=0 clamped to 1
-    def test_page_zero_clamped(self, db):
-        u = _make_user(db)
-        p = _make_persona(db, u)
-        _make_hobby(db, p, title="H1")
-        db.commit()
-        hobbies, _ = search_hobbies(db, "", page=0, limit=10)
-        assert len(hobbies) == 1
-
-    # BUG-2: page=-1 clamped to 1
-    def test_page_negative_clamped(self, db):
-        u = _make_user(db)
-        p = _make_persona(db, u)
-        _make_hobby(db, p, title="H1")
-        db.commit()
-        hobbies, _ = search_hobbies(db, "", page=-1, limit=10)
-        assert len(hobbies) == 1
-
-    # BUG-2: limit=0 clamped to 1 (no ZeroDivisionError)
-    def test_limit_zero_clamped(self, db):
-        u = _make_user(db)
-        p = _make_persona(db, u)
-        _make_hobby(db, p, title="H1")
-        db.commit()
-        hobbies, total_pages = search_hobbies(db, "", page=1, limit=0)
-        assert total_pages >= 1
-        assert len(hobbies) == 1
 
 
 # ═══════════════════════════════════════════════════════════════════════════

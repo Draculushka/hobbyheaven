@@ -194,7 +194,7 @@ def test_login_nonexistent_email(client, db):
     assert resp_wrong_pw.status_code == resp_no_email.status_code
     assert "error" in resp_wrong_pw.headers["location"]
     assert "error" in resp_no_email.headers["location"]
-    
+
     # Verify we now get DIFFERENT error messages (as requested by user)
     assert resp_wrong_pw.headers["location"] != resp_no_email.headers["location"]
     assert "error=%D0%9D%D0%B5%D0%B2%D0%B5%D1%80%D0%BD%D1%8B%D0%B9%20%D0%BF%D0%B0%D1%80%D0%BE%D0%BB%D1%8C" in resp_wrong_pw.headers["location"]

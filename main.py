@@ -45,7 +45,7 @@ class CustomCSRFMiddleware(CSRFMiddleware):
         ):
             # Читаем тело запроса один раз
             body = await request.body()
-            
+
             # Подменяем receive, чтобы приложение могло прочитать тело еще раз
             async def new_receive() -> Message:
                 return {"type": "http.request", "body": body}
@@ -53,7 +53,7 @@ class CustomCSRFMiddleware(CSRFMiddleware):
             # Создаем временный запрос для получения токена из формы
             temp_request = Request(scope, receive=new_receive)
             submitted_csrf_token = await self._get_submitted_csrf_token(temp_request)
-            
+
             # Внимание: для проверки используем ТОТ ЖЕ csrf_cookie, который достали выше
             if (
                 not csrf_cookie
@@ -87,7 +87,7 @@ class CustomCSRFMiddleware(CSRFMiddleware):
         token = request.headers.get(self.header_name)
         if token:
             return token
-        
+
         # Затем из формы
         if request.method in ("POST", "PUT", "PATCH", "DELETE"):
             try:

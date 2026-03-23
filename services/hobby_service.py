@@ -132,12 +132,12 @@ def create_hobby(db: Session, persona_id: int, title: str, description: str, tag
     db.add(hobby)
     db.commit()
     db.refresh(hobby)
-    
+
     # Если загружено видео — запускаем асинхронную обработку
     if video_filename:
         # Задача Celery для транскодирования видео в HLS
         process_video_hls.delay(hobby.id, video_filename)
-        
+
     return hobby
 
 
@@ -165,9 +165,8 @@ def delete_hobby(db: Session, hobby: Hobby):
 
 def search_hobbies(db: Session, search: str, cursor: int | None, limit: int):
     """Returns (hobbies, next_cursor)"""
-    from models import Hobby, Persona, User, Comment, Reaction
+    from models import Hobby, Persona, User
     from core.config import HOBBY_SYNONYMS
-    from sqlalchemy.orm import joinedload
 
     limit = max(1, min(limit, 100))
     query = db.query(Hobby).join(Persona, Hobby.persona_id == Persona.id).join(Persona.user).filter(User.deleted_at.is_(None))
@@ -175,8 +174,8 @@ def search_hobbies(db: Session, search: str, cursor: int | None, limit: int):
     if search:
         search_lower = search.lower().strip()
         search_terms = HOBBY_SYNONYMS.get(search_lower, [search_lower])
-        escaped_terms = [t.replace('%', '\\%').replace('_', '\\_') for t in search_terms]
-        filters = [Hobby.title.ilike(f"%{term}%") for term in escaped_terms]
+        escaped_terms = [t.replace('%', '/%').replace('_', '/_') for t in search_terms]
+        filters = [Hobby.title.ilike(f"%{term}%", escape='/') for term in escaped_terms]
         query = query.filter(or_(*filters))
 
     if cursor:
@@ -184,14 +183,14 @@ def search_hobbies(db: Session, search: str, cursor: int | None, limit: int):
 
     hobbies = (query
         .options(
-            joinedload(Hobby.author_persona), 
+            joinedload(Hobby.author_persona),
             joinedload(Hobby.tags),
             joinedload(Hobby.comments).joinedload(Comment.author_persona),
             joinedload(Hobby.reactions).joinedload(Reaction.author_persona)
         )
         .order_by(Hobby.id.desc())
         .limit(limit).all())
-        
+
     next_cursor = hobbies[-1].id if hobbies and len(hobbies) == limit else None
     return hobbies, next_cursor
 

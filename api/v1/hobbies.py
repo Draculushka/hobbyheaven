@@ -1,11 +1,9 @@
 from fastapi import APIRouter, Depends, Query, HTTPException, status
 from sqlalchemy.orm import Session
-from typing import Optional
 from database import get_db
-from models import User, Hobby
+from models import Hobby
 from schemas.hobby import PaginatedHobbyResponse, HobbyResponse
 from services import hobby_service
-from core.security import get_current_user
 
 router = APIRouter(prefix="/hobbies")
 

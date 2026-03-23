@@ -1,5 +1,4 @@
 from pydantic import BaseModel, Field
-from typing import Optional
 from datetime import datetime
 
 class CommentBase(BaseModel):
@@ -16,7 +15,7 @@ class CommentResponse(CommentBase):
     hobby_id: int
     persona_id: int
     created_at: datetime
-    
+
     model_config = {"from_attributes": True}
 
 class ReactionBase(BaseModel):
@@ -30,5 +29,5 @@ class ReactionResponse(ReactionBase):
     hobby_id: int
     persona_id: int
     created_at: datetime
-    
+
     model_config = {"from_attributes": True}

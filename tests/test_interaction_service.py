@@ -28,7 +28,7 @@ def test_update_comment(db: Session):
     h = Hobby(persona_id=p.id, title="Test Hobby 2", description="Desc")
     db.add(h)
     db.commit()
-    
+
     comment = Comment(text="old", hobby_id=h.id, persona_id=p.id)
     db.add(comment)
     db.commit()
@@ -92,7 +92,7 @@ def test_toggle_reaction_premium(db: Session):
     r = toggle_reaction(db, h.id, u.id, "rocket")
     assert r is not None
     assert r.emoji_type == "rocket"
-    
+
     # Check tokens deducted
     db.refresh(u)
     assert u.tokens == 9

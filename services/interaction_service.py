@@ -2,7 +2,6 @@ from fastapi import HTTPException, status
 from sqlalchemy.orm import Session, joinedload
 from models import Hobby, Comment, Reaction, Persona, User
 from typing import Optional
-from datetime import datetime, timezone
 
 def add_comment(db: Session, hobby_id: int, user_id: int, text: str) -> Comment:
     user = db.query(User).filter(User.id == user_id).first()
@@ -11,7 +10,7 @@ def add_comment(db: Session, hobby_id: int, user_id: int, text: str) -> Comment:
 
     persona_id = user.active_persona_id
     if not persona_id:
-        persona = db.query(Persona).filter(Persona.user_id == user_id, Persona.is_default == True).first()
+        persona = db.query(Persona).filter(Persona.user_id == user_id, Persona.is_default).first()
         if not persona:
             persona = db.query(Persona).filter(Persona.user_id == user_id).first()
         if not persona:
@@ -34,7 +33,7 @@ def update_comment(db: Session, comment_id: int, user_id: int, new_text: str) ->
     comment = db.query(Comment).options(joinedload(Comment.author_persona)).filter(Comment.id == comment_id).first()
     if not comment:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Comment not found")
-    
+
     # Только автор может редактировать
     if comment.author_persona.user_id != user_id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to edit this comment")
@@ -48,16 +47,16 @@ def delete_comment(db: Session, comment_id: int, user_id: int):
     comment = db.query(Comment).options(joinedload(Comment.author_persona), joinedload(Comment.hobby)).filter(Comment.id == comment_id).first()
     if not comment:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Comment not found")
-    
+
     # Проверяем, принадлежит ли комментарий пользователю (через любую его персону)
     # Или если это админ, или владелец поста
     is_author = (comment.author_persona.user_id == user_id)
-    
+
     if not is_author:
         user = db.query(User).filter(User.id == user_id).first()
         is_admin = user.is_admin if user else False
         is_post_owner = (comment.hobby.author_persona.user_id == user_id)
-        
+
         if not (is_admin or is_post_owner):
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not authorized to delete this comment")
 
@@ -81,7 +80,7 @@ def toggle_reaction(db: Session, hobby_id: int, user_id: int, emoji_type: str = 
     persona_id = user.active_persona_id
     if not persona_id:
         # Фолбэк на дефолтную или любую
-        persona = db.query(Persona).filter(Persona.user_id == user_id, Persona.is_default == True).first()
+        persona = db.query(Persona).filter(Persona.user_id == user_id, Persona.is_default).first()
         if not persona:
             persona = db.query(Persona).filter(Persona.user_id == user_id).first()
         if not persona:
@@ -96,7 +95,7 @@ def toggle_reaction(db: Session, hobby_id: int, user_id: int, emoji_type: str = 
     if emoji_type == "heart":
         # ТОЛЬКО для сердечка логика переключения
         existing = db.query(Reaction).filter(
-            Reaction.hobby_id == hobby_id, 
+            Reaction.hobby_id == hobby_id,
             Reaction.persona_id == persona_id,
             Reaction.emoji_type == "heart"
         ).first()

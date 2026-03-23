@@ -246,7 +246,7 @@ def test_logout(client):
 # ---------------------------------------------------------------------------
 
 def test_random_hobby_empty_db(client):
-    """GET /random with no hobbies redirects to home."""
-    response = client.get("/random", follow_redirects=False)
-    assert response.status_code == 303
-    assert response.headers["location"] == "/"
+    """GET /random with no hobbies -> renders explore.html with 200 OK (empty list)."""
+    response = client.get("/random")
+    assert response.status_code == 200
+    assert "Вдохновение" in response.text

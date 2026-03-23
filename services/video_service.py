@@ -1,12 +1,8 @@
 import subprocess
-import os
-import uuid
 import logging
-from pathlib import Path
 from core.celery_app import celery_app
 from services.s3_service import upload_file_to_s3
 from core.config import UPLOAD_DIR
-from sqlalchemy.orm import Session
 from database import SessionLocal
 from models import Hobby
 
@@ -20,12 +16,10 @@ def process_video_hls(hobby_id: int, original_filename: str):
     """
     temp_dir = UPLOAD_DIR / f"temp_video_{hobby_id}"
     temp_dir.mkdir(parents=True, exist_ok=True)
-    
+
     input_path = UPLOAD_DIR / original_filename
-    output_playlist = temp_dir / "playlist.m3u8"
-    
-    # Сложная FFmpeg команда для создания мастер-плейлиста с адаптивным битрейтом
-    # (HLS - 1080, 720, 480)
+
+    # Сложная FFmpeg команда для создания мастер-плейлиста с адаптивным битрейтом    # (HLS - 1080, 720, 480)
     # В этом примере мы используем одну из наиболее стабильных схем нарезки
     cmd = [
         "ffmpeg", "-i", str(input_path),
@@ -46,11 +40,11 @@ def process_video_hls(hobby_id: int, original_filename: str):
         "-var_stream_map", "v:0,a:0 v:1,a:1 v:2,a:2",
         str(temp_dir / "v%v.m3u8")
     ]
-    
+
     try:
         logger.info(f"Starting transcoding for Hobby {hobby_id}")
         subprocess.run(cmd, check=True)
-        
+
         # Теперь загружаем ВСЕ созданные файлы в S3
         master_url = ""
         for file in temp_dir.glob("*"):
@@ -71,7 +65,7 @@ def process_video_hls(hobby_id: int, original_filename: str):
                 logger.info(f"Successfully processed video for Hobby {hobby_id}")
         finally:
             db.close()
-            
+
     except Exception as e:
         logger.error(f"Error during video processing: {e}")
     finally:

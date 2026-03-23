@@ -1,5 +1,4 @@
 from celery import Celery
-import os
 from core.config import REDIS_URL
 
 # Инициализируем Celery
