@@ -29,7 +29,7 @@ class TestAuthServiceExtra:
     def test_verify_code_with_deleted_user(self, mock_redis, db):
         from core.security import get_password_hash
         user = User(
-            email="deleted@test.com", 
+            email="deleted@test.com",
             hashed_password=get_password_hash("pw"),
             deleted_at=datetime.now(timezone.utc)
         )
