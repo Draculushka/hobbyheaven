@@ -184,10 +184,13 @@
 
         const prevActive = isActive;
         const prevCount = currentCount;
-        const newActive = !isActive;
-        buttonElement.setAttribute('data-active', newActive ? 'true' : 'false');
+        
+        let newActive;
 
         if (emojiType === 'heart') {
+            newActive = !isActive;
+            buttonElement.setAttribute('data-active', newActive ? 'true' : 'false');
+            
             if (newActive) {
                 buttonElement.classList.replace('text-muted', 'text-danger');
                 iconSpan.classList.replace('grayscale', 'filter-none');
@@ -200,17 +203,18 @@
                 countSpan.textContent = Math.max(0, currentCount - 1);
             }
         } else {
-            if (newActive) {
-                buttonElement.classList.replace('text-muted', 'text-primary-dark');
-                iconSpan.classList.replace('grayscale', 'filter-none');
-                iconSpan.classList.replace('opacity-50', 'opacity-100');
-                countSpan.textContent = currentCount + 1;
-            } else {
-                buttonElement.classList.replace('text-primary-dark', 'text-muted');
-                iconSpan.classList.replace('filter-none', 'grayscale');
-                iconSpan.classList.replace('opacity-100', 'opacity-50');
-                countSpan.textContent = Math.max(0, currentCount - 1);
-            }
+            // Премиум-реакции: всегда добавляются, не переключаются
+            newActive = true;
+            buttonElement.setAttribute('data-active', 'true');
+            
+            buttonElement.classList.replace('text-muted', 'text-primary-dark');
+            iconSpan.classList.replace('grayscale', 'filter-none');
+            iconSpan.classList.replace('opacity-50', 'opacity-100');
+            countSpan.textContent = currentCount + 1;
+            
+            // Легкая анимация
+            iconSpan.classList.add('animate-bounce');
+            setTimeout(() => iconSpan.classList.remove('animate-bounce'), 500);
         }
 
         try {
@@ -219,9 +223,34 @@
             });
             if (response.status === 401) return window.location.href = '/login';
             if (!response.ok) {
+                // Возврат UI при ошибке
                 buttonElement.setAttribute('data-active', prevActive ? 'true' : 'false');
                 countSpan.textContent = prevCount;
-                alert('Ошибка при установке реакции');
+                
+                if (emojiType === 'heart') {
+                    if (prevActive) {
+                        buttonElement.classList.replace('text-muted', 'text-danger');
+                        iconSpan.classList.replace('grayscale', 'filter-none');
+                        iconSpan.classList.replace('opacity-50', 'opacity-100');
+                    } else {
+                        buttonElement.classList.replace('text-danger', 'text-muted');
+                        iconSpan.classList.replace('filter-none', 'grayscale');
+                        iconSpan.classList.replace('opacity-100', 'opacity-50');
+                    }
+                } else {
+                    if (!prevActive) {
+                        buttonElement.classList.replace('text-primary-dark', 'text-muted');
+                        iconSpan.classList.replace('filter-none', 'grayscale');
+                        iconSpan.classList.replace('opacity-100', 'opacity-50');
+                    }
+                }
+
+                const data = await response.json().catch(() => null);
+                if (data && data.detail) {
+                    alert(data.detail);
+                } else {
+                    alert('Ошибка при установке реакции');
+                }
             }
         } catch (e) { console.error(e); }
     }

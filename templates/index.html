@@ -521,10 +521,12 @@
         const prevCount = currentCount;
 
         // Apply new state immediately
-        const newActive = !isActive;
-        buttonElement.setAttribute('data-active', newActive ? 'true' : 'false');
-
+        let newActive;
+        
         if (emojiType === 'heart') {
+            newActive = !isActive;
+            buttonElement.setAttribute('data-active', newActive ? 'true' : 'false');
+            
             if (newActive) {
                 buttonElement.classList.remove('bg-surface', 'text-muted');
                 buttonElement.classList.add('bg-red-50', 'text-danger');
@@ -539,20 +541,19 @@
                 countSpan.textContent = Math.max(0, currentCount - 1);
             }
         } else {
-            // Premium emojis
-            if (newActive) {
-                buttonElement.classList.remove('bg-surface');
-                buttonElement.classList.add('bg-blue-50', 'ring-1', 'ring-blue-100');
-                iconSpan.classList.remove('grayscale', 'opacity-40', 'group-hover:grayscale-0', 'group-hover:opacity-100');
-                iconSpan.classList.add('filter-none');
-                countSpan.textContent = currentCount + 1;
-            } else {
-                buttonElement.classList.remove('bg-blue-50', 'ring-1', 'ring-blue-100');
-                buttonElement.classList.add('bg-surface');
-                iconSpan.classList.remove('filter-none');
-                iconSpan.classList.add('grayscale', 'opacity-40', 'group-hover:grayscale-0', 'group-hover:opacity-100');
-                countSpan.textContent = Math.max(0, currentCount - 1);
-            }
+            // Premium emojis: всегда добавляем, не переключаем
+            newActive = true;
+            buttonElement.setAttribute('data-active', 'true');
+            
+            buttonElement.classList.remove('bg-surface');
+            buttonElement.classList.add('bg-blue-50', 'ring-1', 'ring-blue-100');
+            iconSpan.classList.remove('grayscale', 'opacity-40', 'group-hover:grayscale-0', 'group-hover:opacity-100');
+            iconSpan.classList.add('filter-none');
+            countSpan.textContent = currentCount + 1;
+            
+            // Легкая анимация
+            iconSpan.classList.add('animate-bounce');
+            setTimeout(() => iconSpan.classList.remove('animate-bounce'), 500);
         }
 
         // --- SERVER REQUEST ---
@@ -575,7 +576,6 @@
                 buttonElement.setAttribute('data-active', prevActive ? 'true' : 'false');
                 countSpan.textContent = prevCount;
 
-                // Toggle classes back
                 if (emojiType === 'heart') {
                     if (prevActive) {
                         buttonElement.classList.remove('bg-surface', 'text-muted');
@@ -589,21 +589,18 @@
                         iconSpan.classList.add('grayscale', 'opacity-50', 'group-hover:grayscale-0', 'group-hover:opacity-100');
                     }
                 } else {
-                    if (prevActive) {
-                        buttonElement.classList.remove('bg-surface');
-                        buttonElement.classList.add('bg-blue-50', 'ring-1', 'ring-blue-100');
-                        iconSpan.classList.remove('grayscale', 'opacity-40', 'group-hover:grayscale-0', 'group-hover:opacity-100');
-                        iconSpan.classList.add('filter-none');
-                    } else {
+                    if (!prevActive) {
                         buttonElement.classList.remove('bg-blue-50', 'ring-1', 'ring-blue-100');
                         buttonElement.classList.add('bg-surface');
                         iconSpan.classList.remove('filter-none');
                         iconSpan.classList.add('grayscale', 'opacity-40', 'group-hover:grayscale-0', 'group-hover:opacity-100');
                     }
                 }
-
-                const error = await response.json();
-                alert(error.detail || 'Ошибка при установке реакции');
+                
+                const data = await response.json().catch(() => null);
+                if (data && data.detail) {
+                    alert(data.detail);
+                }
             }
         } catch (e) {
             console.error('Like error:', e);
