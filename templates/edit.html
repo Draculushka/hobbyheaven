@@ -68,7 +68,7 @@
 
                 <div class="space-y-2">
                     <label for="editor" class="text-sm font-semibold uppercase tracking-wider text-muted-light ml-1">История, прогресс или совет</label>
-                    <textarea name="description" id="editor">{{ hobby.description | e }}</textarea>
+                    <textarea name="description" id="editor" maxlength="3000">{{ hobby.description | e }}</textarea>
                 </div>
 
                 <div class="flex flex-col md:flex-row items-center justify-between gap-6 pt-4">

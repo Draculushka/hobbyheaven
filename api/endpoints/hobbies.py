@@ -95,7 +95,7 @@ def get_random_hobby(request: Request, db: Session = Depends(get_db)):
 @router.post("/create-hobby")
 def create_hobby(
     title: str = Form(..., max_length=255),
-    description: str = Form(..., max_length=50000),
+    description: str = Form(..., max_length=3000),
     tags_input: str = Form("", max_length=500),
     persona_id: Optional[int] = Form(None),
     image: UploadFile = File(None),
@@ -165,7 +165,7 @@ def edit_hobby_page(
 def update_hobby(
     hobby_id: int,
     title: str = Form(..., max_length=255),
-    description: str = Form(..., max_length=50000),
+    description: str = Form(..., max_length=3000),
     tags_input: str = Form("", max_length=500),
     image: UploadFile = File(None),
     db: Session = Depends(get_db),
