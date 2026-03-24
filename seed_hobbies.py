@@ -1,7 +1,8 @@
 import random
 from database import SessionLocal
-from models import Hobby, Tag
+from models import User, Persona, Hobby, Tag
 from datetime import datetime, timezone
+from core.security import get_password_hash
 
 # Категории и примеры хобби
 categories = {
@@ -48,12 +49,38 @@ categories = {
     ]
 }
 
-authors = ["Алексей", "Мария", "Дмитрий", "Елена", "Иван", "Ольга", "Сергей", "Анна", "Петр", "Наталья"]
+authors = ["Alexey", "Maria", "Dmitry", "Elena", "Ivan", "Olga", "Sergey", "Anna", "Petr", "Natalya"]
 
 def seed_data():
     db = SessionLocal()
     try:
-        # Сначала создадим теги категорий
+        # 1. Создаем системного пользователя для сид-данных
+        seed_user = db.query(User).filter(User.email == "seed@hobbyhold.com").first()
+        if not seed_user:
+            seed_user = User(
+                email="seed@hobbyhold.com",
+                hashed_password=get_password_hash("seedpassword"),
+                is_active=True,
+                tokens=1000
+            )
+            db.add(seed_user)
+            db.flush()
+
+        # 2. Создаем персоны
+        persona_objects = []
+        for name in authors:
+            persona = db.query(Persona).filter(Persona.username == name).first()
+            if not persona:
+                persona = Persona(
+                    user_id=seed_user.id,
+                    username=name,
+                    bio=f"Я {name}, и я люблю делиться своими увлечениями!"
+                )
+                db.add(persona)
+                db.flush()
+            persona_objects.append(persona)
+
+        # 3. Сначала создадим теги категорий
         tag_objects = {}
         for cat_name in categories.keys():
             tag = db.query(Tag).filter(Tag.name == cat_name).first()
@@ -73,8 +100,7 @@ def seed_data():
                 db.flush()
             tag_objects[tag_name] = tag
 
-        hobbies_to_add = []
-        total_needed = 500
+        total_needed = 100 # Уменьшим до 100 для быстроты, но можно и 500
         current_count = 0
 
         # Собираем все базовые хобби
@@ -83,21 +109,15 @@ def seed_data():
             for item in items:
                 all_base_hobbies.append((item, cat))
 
-        # Наполняем до 500
+        # Наполняем
         while current_count < total_needed:
-            # Выбираем случайное хобби из списка или генерируем вариацию
             base_hobby, cat = random.choice(all_base_hobbies)
 
-            # Если мы уже добавили много, начнем добавлять вариации (например "Продвинутый футбол")
             if current_count >= len(all_base_hobbies):
                 prefix = random.choice(["Продвинутый", "Любительский", "Экстремальный", "Утренний", "Вечерний", "Профессиональный"])
                 title = f"{prefix} {base_hobby}"
             else:
                 title = base_hobby
-
-            # Проверка на дубликаты в базе (опционально, но лучше для чистоты)
-            # if db.query(Hobby).filter(Hobby.title == title).first():
-            #     continue
 
             description = f"Это увлекательное занятие в категории {cat}. Помогает расслабиться и найти единомышленников. " \
                           f"Многие выбирают {title} как основной способ самовыражения."
@@ -105,13 +125,12 @@ def seed_data():
             hobby = Hobby(
                 title=title,
                 description=description,
-                author=random.choice(authors),
+                persona_id=random.choice(persona_objects).id,
                 created_at=datetime.now(timezone.utc)
             )
 
             # Привязываем теги
             hobby.tags.append(tag_objects[cat])
-            # Добавляем случайный дополнительный тег
             hobby.tags.append(tag_objects[random.choice(extra_tags)])
 
             db.add(hobby)
@@ -120,7 +139,7 @@ def seed_data():
                 print(f"Добавлено {current_count} хобби...")
 
         db.commit()
-        print("База успешно наполнена 500 хобби!")
+        print(f"База успешно наполнена {current_count} хобби!")
 
     except Exception as e:
         print(f"Ошибка при наполнении: {e}")

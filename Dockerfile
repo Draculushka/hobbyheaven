@@ -26,4 +26,4 @@ RUN adduser --disabled-password --no-create-home --gecos "" appuser
 USER appuser
 
 # Команда для запуска (uvicorn)
-CMD ["sh", "-c", "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8000 --workers 4"]
+CMD ["sh", "-c", "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8000 --workers 1"]

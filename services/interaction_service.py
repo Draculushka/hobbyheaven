@@ -72,10 +72,8 @@ def toggle_reaction(db: Session, hobby_id: int, user_id: int, emoji_type: str = 
 
     is_premium_emoji = (emoji_type != "heart")
     if is_premium_emoji:
-        if not user.is_premium:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Premium required for custom reactions")
         if user.tokens < 1:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Недостаточно токенов для премиум-реакции")
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Недостаточно токенов для кастомной реакции")
 
     persona_id = user.active_persona_id
     if not persona_id:
