@@ -97,7 +97,15 @@ class CustomCSRFMiddleware(CSRFMiddleware):
                 return None
         return None
 
-app = FastAPI(title="Hobby Hold")
+from contextlib import asynccontextmanager  # noqa: E402
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    from services.s3_service import init_s3_bucket
+    init_s3_bucket()
+    yield
+
+app = FastAPI(title="Hobby Hold", lifespan=lifespan)
 
 # CSRF-защита (double-submit cookie)
 app.add_middleware(

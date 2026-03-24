@@ -52,3 +52,35 @@ def delete_file_from_s3(object_name: str):
     except ClientError as e:
         logger.error(f"Failed to delete {object_name} from S3: {e}")
         # Don't strictly raise here, as failing to delete an old image shouldn't crash the app usually
+
+def init_s3_bucket():
+    """
+    Initializes the S3 bucket if it doesn't exist and sets a public-read policy.
+    This ensures that images uploaded to MinIO can be loaded by the browser directly.
+    """
+    try:
+        try:
+            s3_client.head_bucket(Bucket=S3_BUCKET)
+            logger.info(f"S3 Bucket '{S3_BUCKET}' already exists.")
+        except ClientError:
+            logger.info(f"S3 Bucket '{S3_BUCKET}' not found. Creating it...")
+            s3_client.create_bucket(Bucket=S3_BUCKET)
+        
+        # Set bucket policy to allow public read access to all objects
+        import json
+        policy = {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Sid": "PublicReadGetObject",
+                    "Effect": "Allow",
+                    "Principal": "*",
+                    "Action": ["s3:GetObject"],
+                    "Resource": [f"arn:aws:s3:::{S3_BUCKET}/*"]
+                }
+            ]
+        }
+        s3_client.put_bucket_policy(Bucket=S3_BUCKET, Policy=json.dumps(policy))
+        logger.info(f"Public read policy applied to bucket '{S3_BUCKET}'.")
+    except Exception as e:
+        logger.error(f"Error initializing S3 bucket: {e}")
