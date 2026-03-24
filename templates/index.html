@@ -196,7 +196,7 @@
         <form action="/create-hobby" method="post" enctype="multipart/form-data" class="space-y-6" onsubmit="handleUploadState('submitBtn')">
             <input type="hidden" name="csrftoken" value="{{ request.scope.get('csrftoken', '') }}">
             <div class="flex items-center gap-4 mb-4">
-                <label for="persona-select" class="sr-only">Выбрать воплощение</label>
+                <label for="persona-select" class="sr-only">Выбрать маску</label>
                 <select id="persona-select" name="persona_id" class="bg-surface text-dark text-sm font-bold px-4 py-2 rounded-xl border-none outline-none focus:ring-2 focus:ring-primary">
                     {% for persona in user.personas %}
                     <option value="{{ persona.id }}" {{ 'selected' if persona.id == user.active_persona_id }}>{{ persona.username }}</option>
@@ -305,7 +305,7 @@
                                 <button id="btn-reaction-{{ hobby.id }}-{{ emo }}" onclick="toggleLike(this, {{ hobby.id }}, '{{ emo }}')" 
                                         data-active="{{ 'true' if my_emo else 'false' }}"
                                         class="flex items-center gap-2 px-4 py-2 {{ 'bg-blue-50 ring-1 ring-blue-100' if my_emo else 'bg-surface' }} rounded-full hover:scale-105 transition-all group"
-                                        title="{{ 'Стоит 1 токен' if user and user.is_premium else 'Нужен статус Виртуоза' }}">
+                                        title="{{ 'Стоит 1 токен' if user and user.is_premium else 'Нужен HobbyHold+' }}">
                                     <span id="icon-reaction-{{ hobby.id }}-{{ emo }}" class="text-base {{ 'filter-none' if my_emo else 'grayscale opacity-40 group-hover:grayscale-0 group-hover:opacity-100' }}">{{ emo_icon }}</span>
                                     <span id="count-reaction-{{ hobby.id }}-{{ emo }}" class="text-sm font-bold text-muted">{{ emo_count }}</span>
                                 </button>
