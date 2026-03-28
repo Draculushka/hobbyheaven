@@ -110,37 +110,37 @@
             <div class="max-w-[1600px] mx-auto columns-1 lg:columns-2 2xl:columns-3 gap-8 space-y-8 px-4">
                 {% for comment in hobby.comments | sort(attribute='created_at', reverse=True) %}
                 <div class="break-inside-avoid bg-white border border-border/60 p-6 md:p-8 rounded-[2.5rem] shadow-sm hover:shadow-md transition-all relative group/comment mb-8" id="comment-{{ comment.id }}">
-                    <div class="flex items-start gap-4">
-                        <a href="/profile/{{ comment.author_persona.username }}" class="flex-shrink-0 mt-1">
+                    <!-- Comment Header: Avatar, Name, Time -->
+                    <div class="flex items-center gap-3 mb-4">
+                        <a href="/profile/{{ comment.author_persona.username }}" class="flex-shrink-0">
                             {% if comment.author_persona.avatar_path %}
-                            <img src="{% if comment.author_persona.avatar_path.startswith('http') %}{{ comment.author_persona.avatar_path }}{% else %}/uploads/{{ comment.author_persona.avatar_path }}{% endif %}" class="w-12 h-12 rounded-full object-cover border-2 border-surface shadow-sm">
+                            <img src="{% if comment.author_persona.avatar_path.startswith('http') %}{{ comment.author_persona.avatar_path }}{% else %}/uploads/{{ comment.author_persona.avatar_path }}{% endif %}" class="w-10 h-10 rounded-full object-cover border border-border">
                             {% else %}
-                            <div class="w-12 h-12 bg-dark rounded-full flex items-center justify-center text-white font-bold text-sm shadow-sm">{{ comment.author_persona.username[0].upper() }}</div>
+                            <div class="w-10 h-10 bg-dark rounded-full flex items-center justify-center text-white font-bold text-xs shadow-sm">{{ comment.author_persona.username[0].upper() }}</div>
                             {% endif %}
                         </a>
-                        <div class="flex-grow min-w-0">
-                            <div class="flex items-center justify-between mb-3">
-                                <div>
-                                    <a href="/profile/{{ comment.author_persona.username }}" class="block font-black text-dark hover:text-primary transition-colors text-base leading-none mb-1">{{ comment.author_persona.username }}</a>
-                                    <time class="text-[10px] text-muted font-bold uppercase tracking-widest" datetime="{{ comment.created_at.isoformat() }}">{{ comment.created_at.strftime('%d.%m.%Y %H:%M') }}</time>
-                                </div>
-                            </div>
-                            
-                            <!-- Collapsible Content Wrapper -->
-                            <div class="relative overflow-hidden transition-all duration-500 max-h-48" id="comment-body-{{ comment.id }}">
-                                <p class="text-dark leading-relaxed text-[16px] whitespace-pre-wrap break-words overflow-hidden pb-4">
-                                    {{ comment.text }}
-                                </p>
-                                <!-- Fade gradient overlay -->
-                                <div class="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-white to-transparent pointer-events-none" id="fade-{{ comment.id }}"></div>
-                            </div>
-                            
-                            <!-- Read More Button -->
-                            <button onclick="toggleCommentExpand('{{ comment.id }}')" id="btn-more-{{ comment.id }}" 
-                                    class="hidden mt-2 text-xs font-black text-primary uppercase tracking-widest hover:text-primary-dark transition-colors">
-                                Читать полностью
-                            </button>
+                        <div class="min-w-0">
+                            <a href="/profile/{{ comment.author_persona.username }}" class="block font-black text-dark hover:text-primary transition-colors text-sm leading-none mb-1 truncate">{{ comment.author_persona.username }}</a>
+                            <time class="text-[10px] text-muted font-bold uppercase tracking-widest" datetime="{{ comment.created_at.isoformat() }}">{{ comment.created_at.strftime('%d.%m.%Y %H:%M') }}</time>
                         </div>
+                    </div>
+
+                    <!-- Comment Body: Text starts from the left -->
+                    <div class="relative min-w-0">
+                        <!-- Collapsible Content Wrapper -->
+                        <div class="relative overflow-hidden transition-all duration-500 max-h-48" id="comment-body-{{ comment.id }}">
+                            <p class="text-dark leading-relaxed text-[16px] whitespace-pre-wrap break-words overflow-hidden pb-4">
+                                {{ comment.text }}
+                            </p>
+                            <!-- Fade gradient overlay -->
+                            <div class="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-white to-transparent pointer-events-none" id="fade-{{ comment.id }}"></div>
+                        </div>
+                        
+                        <!-- Read More Button -->
+                        <button onclick="toggleCommentExpand('{{ comment.id }}')" id="btn-more-{{ comment.id }}" 
+                                class="hidden mt-2 text-xs font-black text-primary uppercase tracking-widest hover:text-primary-dark transition-colors">
+                            Читать полностью
+                        </button>
                     </div>
                     
                     {% if user and (user.id == comment.author_persona.user_id or user.is_admin or user.id == hobby.author_persona.user_id) %}
