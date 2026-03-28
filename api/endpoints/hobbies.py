@@ -37,6 +37,7 @@ def post_detail(
         joinedload(Hobby.author_persona),
         joinedload(Hobby.tags),
         joinedload(Hobby.comments).joinedload(Comment.author_persona),
+        joinedload(Hobby.comments).joinedload(Comment.reactions),
         joinedload(Hobby.reactions).joinedload(Reaction.author_persona)
     ).filter(Hobby.id == hobby_id).first()
 

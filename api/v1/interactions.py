@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from typing import Optional
 from database import get_db
 from models import User
-from schemas.interaction import CommentCreate, CommentResponse, ReactionCreate, ReactionResponse, CommentUpdate
+from schemas.interaction import CommentCreate, CommentResponse, ReactionCreate, ReactionResponse, CommentUpdate, CommentReactionResponse
 from core.security import get_current_user
 from services import interaction_service
 
@@ -55,3 +55,14 @@ def toggle_reaction(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
 
     return interaction_service.toggle_reaction(db, hobby_id, current_user.id, reaction.emoji_type)
+
+@router.post("/comments/{comment_id}/reactions", response_model=Optional[CommentReactionResponse])
+def toggle_comment_reaction(
+    comment_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    if not current_user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
+
+    return interaction_service.toggle_comment_reaction(db, comment_id, current_user.id)

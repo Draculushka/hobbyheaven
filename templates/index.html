@@ -333,18 +333,31 @@
                                     </div>
                                     <p class="text-muted text-left leading-relaxed break-words overflow-hidden" id="comment-text-{{ comment.id }}">{{ comment.text }}</p>
                                     
-                                    {% if user and (comment.author_persona.user_id == user.id or user.is_admin or hobby.author_persona.user_id == user.id) %}
-                                    <div class="absolute bottom-2 right-3 hidden group-hover/comment:flex items-center gap-1 bg-white/80 backdrop-blur-sm p-1 rounded-lg shadow-sm border border-border/50">
-                                        {% if comment.author_persona.user_id == user.id %}
-                                        <button onclick="editComment({{ comment.id }}, {{ comment.text | tojson | forceescape }})" class="text-subtle hover:text-primary p-0.5" title="Редактировать">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
-                                        </button>
+                                    <div class="mt-2 flex items-center justify-between">
+                                        <div class="flex items-center gap-4">
+                                            {% set comment_like_count = comment.reactions | length %}
+                                            {% set user_persona_ids = (user.personas | map(attribute='id') | list) if user else [] %}
+                                            {% set my_comment_like = comment.reactions | selectattr('persona_id', 'in', user_persona_ids) | first if user else none %}
+                                            <button onclick="toggleCommentLike(this, {{ comment.id }})" data-active="{{ 'true' if my_comment_like else 'false' }}"
+                                                    class="flex items-center gap-1.5 text-xs font-bold {{ 'text-danger' if my_comment_like else 'text-muted hover:text-danger' }} transition-colors group/btn">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 {{ 'fill-current' if my_comment_like else 'fill-none stroke-current' }} group-hover/btn:scale-110 transition-transform" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                                                <span id="count-comment-like-{{ comment.id }}">{{ comment_like_count if comment_like_count > 0 else 'Лайк' }}</span>
+                                            </button>
+                                        </div>
+                                    
+                                        {% if user and (comment.author_persona.user_id == user.id or user.is_admin or hobby.author_persona.user_id == user.id) %}
+                                        <div class="hidden group-hover/comment:flex items-center gap-1 bg-white/80 backdrop-blur-sm p-1 rounded-lg shadow-sm border border-border/50">
+                                            {% if comment.author_persona.user_id == user.id %}
+                                            <button onclick="editComment({{ comment.id }}, {{ comment.text | tojson | forceescape }})" class="text-subtle hover:text-primary p-0.5" title="Редактировать">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                            </button>
+                                            {% endif %}
+                                            <button onclick="deleteComment({{ comment.id }})" class="text-subtle hover:text-danger p-0.5" title="Удалить">
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                            </button>
+                                        </div>
                                         {% endif %}
-                                        <button onclick="deleteComment({{ comment.id }})" class="text-subtle hover:text-danger p-0.5" title="Удалить">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                        </button>
                                     </div>
-                                    {% endif %}
                                 </div>
                                 {% endfor %}
                             </div>
@@ -513,6 +526,67 @@
         placeholder: 'Поделись своей страстью...'
     }).catch(error => console.error(error));
     {% endif %}
+
+    async function toggleCommentLike(buttonElement, commentId) {
+        const isActive = buttonElement.getAttribute('data-active') === 'true';
+        const prevActive = isActive;
+        const newActive = !isActive;
+        
+        const countSpan = document.getElementById(`count-comment-like-${commentId}`);
+        const svgElement = buttonElement.querySelector('svg');
+        
+        let currentCount = countSpan.textContent === 'Лайк' ? 0 : parseInt(countSpan.textContent) || 0;
+        const prevCount = currentCount;
+        
+        // Optimistic UI update
+        buttonElement.setAttribute('data-active', newActive ? 'true' : 'false');
+        
+        if (newActive) {
+            buttonElement.classList.replace('text-muted', 'text-danger');
+            buttonElement.classList.remove('hover:text-danger');
+            svgElement.classList.replace('fill-none', 'fill-current');
+            svgElement.classList.remove('stroke-current');
+            countSpan.textContent = currentCount + 1;
+        } else {
+            buttonElement.classList.replace('text-danger', 'text-muted');
+            buttonElement.classList.add('hover:text-danger');
+            svgElement.classList.replace('fill-current', 'fill-none');
+            svgElement.classList.add('stroke-current');
+            countSpan.textContent = (currentCount - 1) > 0 ? (currentCount - 1) : 'Лайк';
+        }
+
+        try {
+            const response = await fetch(`/api/v1/comments/${commentId}/reactions`, {
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }
+            });
+            
+            if (response.status === 401) {
+                window.location.href = '/login';
+                return;
+            }
+            
+            if (!response.ok) {
+                // Revert UI on failure
+                buttonElement.setAttribute('data-active', prevActive ? 'true' : 'false');
+                countSpan.textContent = prevCount > 0 ? prevCount : 'Лайк';
+                
+                if (prevActive) {
+                    buttonElement.classList.replace('text-muted', 'text-danger');
+                    buttonElement.classList.remove('hover:text-danger');
+                    svgElement.classList.replace('fill-none', 'fill-current');
+                    svgElement.classList.remove('stroke-current');
+                } else {
+                    buttonElement.classList.replace('text-danger', 'text-muted');
+                    buttonElement.classList.add('hover:text-danger');
+                    svgElement.classList.replace('fill-current', 'fill-none');
+                    svgElement.classList.add('stroke-current');
+                }
+            }
+        } catch (e) { 
+            console.error(e);
+        }
+    }
 
     async function toggleLike(buttonElement, hobbyId, emojiType = 'heart') {
         const iconSpan = document.getElementById(`icon-reaction-${hobbyId}-${emojiType}`);

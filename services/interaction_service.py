@@ -1,6 +1,6 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session, joinedload
-from models import Hobby, Comment, Reaction, Persona, User
+from models import Hobby, Comment, Reaction, Persona, User, CommentReaction
 from typing import Optional
 
 def add_comment(db: Session, hobby_id: int, user_id: int, text: str, persona_id: Optional[int] = None) -> Comment:
@@ -123,5 +123,41 @@ def toggle_reaction(db: Session, hobby_id: int, user_id: int, emoji_type: str = 
         db.add(new_reaction)
         db.commit()
         db.refresh(user)
+        db.refresh(new_reaction)
+        return new_reaction
+
+def toggle_comment_reaction(db: Session, comment_id: int, user_id: int) -> Optional[CommentReaction]:
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    persona_id = user.active_persona_id
+    if not persona_id:
+        persona = db.query(Persona).filter(Persona.user_id == user_id, Persona.is_default).first()
+        if not persona:
+            persona = db.query(Persona).filter(Persona.user_id == user_id).first()
+        if not persona:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No persona found for user")
+        persona_id = persona.id
+        user.active_persona_id = persona_id
+        db.commit()
+
+    comment = db.query(Comment).filter(Comment.id == comment_id).first()
+    if not comment:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Comment not found")
+
+    existing = db.query(CommentReaction).filter(
+        CommentReaction.comment_id == comment_id,
+        CommentReaction.persona_id == persona_id
+    ).first()
+
+    if existing:
+        db.delete(existing)
+        db.commit()
+        return None
+    else:
+        new_reaction = CommentReaction(comment_id=comment_id, persona_id=persona_id)
+        db.add(new_reaction)
+        db.commit()
         db.refresh(new_reaction)
         return new_reaction

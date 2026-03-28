@@ -49,6 +49,7 @@ class Persona(Base):
     hobbies = relationship("Hobby", back_populates="author_persona")
     comments = relationship("Comment", back_populates="author_persona", cascade="all, delete-orphan")
     reactions = relationship("Reaction", back_populates="author_persona", cascade="all, delete-orphan")
+    comment_reactions = relationship("CommentReaction", back_populates="author_persona", cascade="all, delete-orphan")
 
 class Hobby(Base):
     """Пост о хобби, привязанный к конкретной Персоне."""
@@ -91,6 +92,7 @@ class Comment(Base):
 
     hobby = relationship("Hobby", back_populates="comments")
     author_persona = relationship("Persona", back_populates="comments")
+    reactions = relationship("CommentReaction", back_populates="comment", cascade="all, delete-orphan")
 
 class Reaction(Base):
     """Реакция/Лайк к посту."""
@@ -104,3 +106,15 @@ class Reaction(Base):
 
     hobby = relationship("Hobby", back_populates="reactions")
     author_persona = relationship("Persona", back_populates="reactions")
+
+class CommentReaction(Base):
+    """Лайк к комментарию."""
+    __tablename__ = "comment_reactions"
+
+    id = Column(Integer, primary_key=True, index=True)
+    comment_id = Column(Integer, ForeignKey("comments.id"), nullable=False, index=True)
+    persona_id = Column(Integer, ForeignKey("personas.id"), nullable=False, index=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+    comment = relationship("Comment", back_populates="reactions")
+    author_persona = relationship("Persona", back_populates="comment_reactions")

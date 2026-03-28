@@ -11,11 +11,20 @@ class CommentCreate(CommentBase):
 class CommentUpdate(CommentBase):
     pass
 
+class CommentReactionResponse(BaseModel):
+    id: int
+    comment_id: int
+    persona_id: int
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
 class CommentResponse(CommentBase):
     id: int
     hobby_id: int
     persona_id: int
     created_at: datetime
+    reactions: list[CommentReactionResponse] = []
 
     model_config = {"from_attributes": True}
 

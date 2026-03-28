@@ -139,6 +139,16 @@
                             Читать полностью
                         </button>
                     </div>
+
+                    <div class="mt-4 flex items-center gap-4">
+                        {% set comment_like_count = comment.reactions | length %}
+                        {% set my_comment_like = comment.reactions | selectattr('persona_id', 'in', user_persona_ids) | first if user else none %}
+                        <button onclick="toggleCommentLike(this, {{ comment.id }})" data-active="{{ 'true' if my_comment_like else 'false' }}"
+                                class="flex items-center gap-1.5 text-xs font-bold {{ 'text-danger' if my_comment_like else 'text-muted hover:text-danger' }} transition-colors group/btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 {{ 'fill-current' if my_comment_like else 'fill-none stroke-current' }} group-hover/btn:scale-110 transition-transform" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+                            <span id="count-comment-like-{{ comment.id }}">{{ comment_like_count if comment_like_count > 0 else 'Лайк' }}</span>
+                        </button>
+                    </div>
                     
                     {% if user and (user.id == comment.author_persona.user_id or user.is_admin or user.id == hobby.author_persona.user_id) %}
                     <div class="absolute bottom-6 right-8 opacity-0 group-hover/comment:opacity-100 transition-opacity flex gap-1">
@@ -267,6 +277,67 @@
             alert('Произошла ошибка при отправке');
             submitBtn.disabled = false;
             submitBtn.textContent = 'Отправить';
+        }
+    }
+
+    async function toggleCommentLike(buttonElement, commentId) {
+        const isActive = buttonElement.getAttribute('data-active') === 'true';
+        const prevActive = isActive;
+        const newActive = !isActive;
+        
+        const countSpan = document.getElementById(`count-comment-like-${commentId}`);
+        const svgElement = buttonElement.querySelector('svg');
+        
+        let currentCount = countSpan.textContent === 'Лайк' ? 0 : parseInt(countSpan.textContent) || 0;
+        const prevCount = currentCount;
+        
+        // Optimistic UI update
+        buttonElement.setAttribute('data-active', newActive ? 'true' : 'false');
+        
+        if (newActive) {
+            buttonElement.classList.replace('text-muted', 'text-danger');
+            buttonElement.classList.remove('hover:text-danger');
+            svgElement.classList.replace('fill-none', 'fill-current');
+            svgElement.classList.remove('stroke-current');
+            countSpan.textContent = currentCount + 1;
+        } else {
+            buttonElement.classList.replace('text-danger', 'text-muted');
+            buttonElement.classList.add('hover:text-danger');
+            svgElement.classList.replace('fill-current', 'fill-none');
+            svgElement.classList.add('stroke-current');
+            countSpan.textContent = (currentCount - 1) > 0 ? (currentCount - 1) : 'Лайк';
+        }
+
+        try {
+            const response = await fetch(`/api/v1/comments/${commentId}/reactions`, {
+                method: 'POST', 
+                headers: { 'Content-Type': 'application/json' }
+            });
+            
+            if (response.status === 401) {
+                window.location.href = '/login';
+                return;
+            }
+            
+            if (!response.ok) {
+                // Revert UI on failure
+                buttonElement.setAttribute('data-active', prevActive ? 'true' : 'false');
+                countSpan.textContent = prevCount > 0 ? prevCount : 'Лайк';
+                
+                if (prevActive) {
+                    buttonElement.classList.replace('text-muted', 'text-danger');
+                    buttonElement.classList.remove('hover:text-danger');
+                    svgElement.classList.replace('fill-none', 'fill-current');
+                    svgElement.classList.remove('stroke-current');
+                } else {
+                    buttonElement.classList.replace('text-danger', 'text-muted');
+                    buttonElement.classList.add('hover:text-danger');
+                    svgElement.classList.replace('fill-current', 'fill-none');
+                    svgElement.classList.add('stroke-current');
+                }
+            }
+        } catch (e) { 
+            console.error(e);
         }
     }
 
