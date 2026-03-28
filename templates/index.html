@@ -266,8 +266,8 @@
                         <div class="flex justify-between items-center mb-8">
                             <time class="text-subtle text-[10px] font-bold font-sans" datetime="{{ hobby.created_at.isoformat() }}">{{ hobby.created_at.strftime('%d.%m.%Y') }}</time>
                         </div>
-                        <h3 class="text-xl font-bold text-dark mb-4 font-sans">{{ hobby.title }}</h3>
-                        <div class="flex items-center gap-3 mb-6">
+                        <h3 class="text-xl font-bold text-dark mb-4 font-sans break-words overflow-hidden">{{ hobby.title }}</h3>
+                        <div class="flex items-center gap-3 mb-6 min-w-0">
                             <a href="/profile/{{ hobby.author_persona.username }}" class="flex-shrink-0 group/avatar" aria-label="Профиль {{ hobby.author_persona.username }}">
                                 {% if hobby.author_persona.avatar_path %}
                                 <img src="{% if hobby.author_persona.avatar_path.startswith('http') %}{{ hobby.author_persona.avatar_path }}{% else %}/uploads/{{ hobby.author_persona.avatar_path }}{% endif %}" alt="{{ hobby.author_persona.username }}" loading="lazy"
@@ -276,7 +276,7 @@
                                 <div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white font-bold text-sm shadow-sm group-hover/avatar:scale-110 transition-transform">{{ hobby.author_persona.username[0].upper() }}</div>
                                 {% endif %}
                             </a>
-                            <a href="/profile/{{ hobby.author_persona.username }}" class="text-2xl font-bold text-dark hover:text-primary transition-colors">
+                            <a href="/profile/{{ hobby.author_persona.username }}" class="text-2xl font-bold text-dark hover:text-primary transition-colors break-words overflow-hidden">
                                 {{ hobby.author_persona.username }}
                             </a>
                         </div>
@@ -331,7 +331,7 @@
                                             <span class="text-[10px] text-subtle">{{ comment.created_at.strftime('%d.%m %H:%M') }}</span>
                                         </div>
                                     </div>
-                                    <p class="text-muted leading-relaxed break-words overflow-hidden" id="comment-text-{{ comment.id }}">{{ comment.text }}</p>
+                                    <p class="text-muted text-left leading-relaxed break-words overflow-hidden" id="comment-text-{{ comment.id }}">{{ comment.text }}</p>
                                     
                                     {% if user and (comment.author_persona.user_id == user.id or user.is_admin or hobby.author_persona.user_id == user.id) %}
                                     <div class="absolute bottom-2 right-3 hidden group-hover/comment:flex items-center gap-1 bg-white/80 backdrop-blur-sm p-1 rounded-lg shadow-sm border border-border/50">

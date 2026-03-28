@@ -129,13 +129,10 @@
                     <div class="relative min-w-0">
                         <!-- Collapsible Content Wrapper -->
                         <div class="relative overflow-hidden transition-all duration-500 max-h-48" id="comment-body-{{ comment.id }}">
-                            <p class="text-dark leading-relaxed text-[16px] whitespace-pre-wrap break-words overflow-hidden pb-4">
-                                {{ comment.text }}
-                            </p>
+                            <p class="text-dark text-left leading-relaxed text-[16px] whitespace-pre-wrap break-words overflow-hidden pb-4">{{ comment.text }}</p>
                             <!-- Fade gradient overlay -->
                             <div class="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-white to-transparent pointer-events-none" id="fade-{{ comment.id }}"></div>
-                        </div>
-                        
+                        </div>                        
                         <!-- Read More Button -->
                         <button onclick="toggleCommentExpand('{{ comment.id }}')" id="btn-more-{{ comment.id }}" 
                                 class="hidden mt-2 text-xs font-black text-primary uppercase tracking-widest hover:text-primary-dark transition-colors">
