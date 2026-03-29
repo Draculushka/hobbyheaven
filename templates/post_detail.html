@@ -148,7 +148,7 @@
                         <button onclick="toggleCommentLike(this, {{ comment.id }})" data-active="{{ 'true' if my_comment_like else 'false' }}"
                                 class="flex items-center gap-1.5 text-xs font-bold {{ 'text-danger' if my_comment_like else 'text-muted hover:text-danger' }} transition-colors group/btn">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 {{ 'fill-current' if my_comment_like else 'fill-none stroke-current' }} group-hover/btn:scale-110 transition-transform" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
-                            <span id="count-comment-like-{{ comment.id }}">{{ comment_like_count if comment_like_count > 0 else 'Лайк' }}</span>
+                            <span id="count-comment-like-{{ comment.id }}">{{ comment_like_count if comment_like_count > 0 else '' }}</span>
                         </button>
                     </div>
                     
@@ -289,7 +289,7 @@
         const countSpan = document.getElementById(`count-comment-like-${commentId}`);
         const svgElement = buttonElement.querySelector('svg');
         
-        let currentCount = countSpan.textContent === 'Лайк' ? 0 : parseInt(countSpan.textContent) || 0;
+        let currentCount = countSpan.textContent.trim() === '' ? 0 : parseInt(countSpan.textContent) || 0;
         const prevCount = currentCount;
         
         // Optimistic UI update
@@ -306,7 +306,7 @@
             buttonElement.classList.add('hover:text-danger');
             svgElement.classList.replace('fill-current', 'fill-none');
             svgElement.classList.add('stroke-current');
-            countSpan.textContent = (currentCount - 1) > 0 ? (currentCount - 1) : 'Лайк';
+            countSpan.textContent = (currentCount - 1) > 0 ? (currentCount - 1) : '';
         }
 
         try {
@@ -323,7 +323,7 @@
             if (!response.ok) {
                 // Revert UI on failure
                 buttonElement.setAttribute('data-active', prevActive ? 'true' : 'false');
-                countSpan.textContent = prevCount > 0 ? prevCount : 'Лайк';
+                countSpan.textContent = prevCount > 0 ? prevCount : '';
                 
                 if (prevActive) {
                     buttonElement.classList.replace('text-muted', 'text-danger');
