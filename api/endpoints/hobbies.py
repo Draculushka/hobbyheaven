@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session, joinedload
 from typing import Optional
 
 from database import get_db
-from models import Hobby, Persona
+from models import Hobby, Persona, CommentReaction
 from services import hobby_service
 from core.security import get_current_user
 from core.templates import templates

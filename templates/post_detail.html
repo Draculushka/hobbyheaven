@@ -69,6 +69,8 @@
                 <h3 class="text-3xl font-black text-dark mb-2">Обсуждение</h3>
                 <p class="text-muted text-sm mb-10">Мнения и мысли участников сообщества</p>
                 
+                {% set user_persona_ids = (user.personas | map(attribute='id') | list) if user else [] %}
+                
                 {% if user %}
                 <form id="comment-form" onsubmit="addComment(event, {{ hobby.id }})" class="mb-16 bg-surface p-6 rounded-3xl flex gap-4 shadow-inner">
                     <div class="flex-shrink-0 flex flex-col items-center gap-2">
@@ -169,7 +171,6 @@
 
         <!-- Sticky Interaction Bar -->
         <div class="sticky bottom-8 z-40 bg-white/80 backdrop-blur-md border border-border shadow-2xl rounded-full px-6 py-4 flex items-center justify-between mx-auto max-w-sm mb-16">
-            {% set user_persona_ids = (user.personas | map(attribute='id') | list) if user else [] %}
             <div class="flex gap-4">
                 <!-- Heart -->
                 {% set heart_count = hobby.reactions | selectattr('emoji_type', 'equalto', 'heart') | list | length %}

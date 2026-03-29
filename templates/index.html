@@ -336,7 +336,6 @@
                                     <div class="mt-2 flex items-center justify-between">
                                         <div class="flex items-center gap-4">
                                             {% set comment_like_count = comment.reactions | length %}
-                                            {% set user_persona_ids = (user.personas | map(attribute='id') | list) if user else [] %}
                                             {% set my_comment_like = comment.reactions | selectattr('persona_id', 'in', user_persona_ids) | first if user else none %}
                                             <button onclick="toggleCommentLike(this, {{ comment.id }})" data-active="{{ 'true' if my_comment_like else 'false' }}"
                                                     class="flex items-center gap-1.5 text-xs font-bold {{ 'text-danger' if my_comment_like else 'text-muted hover:text-danger' }} transition-colors group/btn">
