@@ -51,6 +51,10 @@ class Persona(Base):
     reactions = relationship("Reaction", back_populates="author_persona", cascade="all, delete-orphan")
     comment_reactions = relationship("CommentReaction", back_populates="author_persona", cascade="all, delete-orphan")
 
+    # Подписки
+    following = relationship("Follow", foreign_keys="Follow.follower_persona_id", back_populates="follower_persona", cascade="all, delete-orphan")
+    followers = relationship("Follow", foreign_keys="Follow.followed_persona_id", back_populates="followed_persona", cascade="all, delete-orphan")
+
 class Hobby(Base):
     """Пост о хобби, привязанный к конкретной Персоне."""
     __tablename__ = "hobbies"
@@ -118,3 +122,16 @@ class CommentReaction(Base):
 
     comment = relationship("Comment", back_populates="reactions")
     author_persona = relationship("Persona", back_populates="comment_reactions")
+
+class Follow(Base):
+    """Связь подписки между Персонами."""
+    __tablename__ = "follows"
+
+    follower_persona_id = Column(Integer, ForeignKey("personas.id"), primary_key=True)
+    followed_persona_id = Column(Integer, ForeignKey("personas.id"), primary_key=True)
+    follower_user_id = Column(Integer, ForeignKey("users.id"), index=True, nullable=False)
+    followed_user_id = Column(Integer, ForeignKey("users.id"), index=True, nullable=False)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+    follower_persona = relationship("Persona", foreign_keys=[follower_persona_id], back_populates="following")
+    followed_persona = relationship("Persona", foreign_keys=[followed_persona_id], back_populates="followers")

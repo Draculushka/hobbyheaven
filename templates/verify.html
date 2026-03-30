@@ -17,6 +17,14 @@
     </div>
     {% endif %}
 
+    {% if code %}
+    <div class="bg-yellow-50 text-yellow-700 p-4 rounded-2xl mb-6 text-xs font-mono text-center border border-yellow-200">
+        <p class="font-bold mb-1">[DEV] Код подтверждения:</p>
+        <p class="text-xl tracking-widest">{{ code }}</p>
+        <p class="mt-1 text-[10px] uppercase opacity-60">Удалить перед деплоем!</p>
+    </div>
+    {% endif %}
+
     <form action="/verify-email" method="post" class="space-y-6">
         <input type="hidden" name="csrftoken" value="{{ request.scope.get('csrftoken', '') }}">
         <input type="hidden" name="email" value="{{ email }}">

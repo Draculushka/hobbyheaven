@@ -414,7 +414,7 @@
         const newText = prompt("Редактировать комментарий:", currentText);
         if (newText === null || newText.trim() === "" || newText === currentText) return;
         try {
-            const response = await fetch(`/api/v1/comments/${commentId}`, {
+            const response = await fetch(`/api/v1/hobbies/comments/${commentId}`, {
                 method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: newText.trim() })
             });
             if (response.ok) location.reload(); else alert('Ошибка при редактировании');
@@ -424,7 +424,7 @@
     async function deleteComment(commentId) {
         if (!confirm("Удалить комментарий?")) return;
         try {
-            const response = await fetch(`/api/v1/comments/${commentId}`, { method: 'DELETE' });
+            const response = await fetch(`/api/v1/hobbies/comments/${commentId}`, { method: 'DELETE' });
             if (response.ok) location.reload(); else alert('Ошибка при удалении');
         } catch (e) { console.error(e); }
     }

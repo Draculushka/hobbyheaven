@@ -41,3 +41,14 @@ class ReactionResponse(ReactionBase):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+class FollowResponse(BaseModel):
+    follower_persona_id: int
+    followed_persona_id: int
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+class PersonaStatsResponse(BaseModel):
+    followers_count: int
+    is_following: bool

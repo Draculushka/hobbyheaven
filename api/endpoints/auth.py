@@ -22,7 +22,7 @@ def register_page(request: Request, error: Optional[str] = None):
 def register_user(
     background_tasks: BackgroundTasks,
     username: str = Form(..., max_length=20),
-    email: str = Form(..., max_length=254),
+    email: str = Form(..., max_length=128),
     password: str = Form(..., min_length=6, max_length=64),
     db: Session = Depends(get_db)
 ):
@@ -37,17 +37,18 @@ def register_user(
     if code:
         background_tasks.add_task(send_mock_email, email, code)
 
-    return RedirectResponse(f"/verify-email?email={email}", status_code=status.HTTP_303_SEE_OTHER)
+    # TODO: Убрать перед деплоем! Код передается в URL только для удобства разработки
+    return RedirectResponse(f"/verify-email?email={email}&code={code}", status_code=status.HTTP_303_SEE_OTHER)
 
 
 @router.get("/verify-email")
-def verify_email_page(request: Request, email: str, error: Optional[str] = None):
-    return templates.TemplateResponse("verify.html", {"request": request, "email": email, "error": error})
+def verify_email_page(request: Request, email: str, code: Optional[str] = None, error: Optional[str] = None):
+    return templates.TemplateResponse("verify.html", {"request": request, "email": email, "code": code, "error": error})
 
 
 @router.post("/verify-email")
 def verify_email(
-    email: str = Form(..., max_length=254),
+    email: str = Form(..., max_length=128),
     code: str = Form(...),
     db: Session = Depends(get_db)
 ):
@@ -68,7 +69,7 @@ def login_page(request: Request, error: Optional[str] = None):
 
 @router.post("/login")
 def login(
-    identifier: str = Form(..., max_length=254),
+    identifier: str = Form(..., max_length=128),
     password: str = Form(...),
     db: Session = Depends(get_db)
 ):

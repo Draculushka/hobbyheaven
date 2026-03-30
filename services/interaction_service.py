@@ -1,6 +1,7 @@
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session, joinedload
-from models import Hobby, Comment, Reaction, Persona, User, CommentReaction
+from sqlalchemy import func
+from models import Hobby, Comment, Reaction, Persona, User, CommentReaction, Follow
 from typing import Optional
 
 def add_comment(db: Session, hobby_id: int, user_id: int, text: str, persona_id: Optional[int] = None) -> Comment:
@@ -161,3 +162,58 @@ def toggle_comment_reaction(db: Session, comment_id: int, user_id: int) -> Optio
         db.commit()
         db.refresh(new_reaction)
         return new_reaction
+
+def follow_persona(db: Session, follower_user_id: int, followed_persona_id: int) -> Follow:
+    follower_user = db.query(User).filter(User.id == follower_user_id).first()
+    if not follower_user or not follower_user.active_persona_id:
+        raise HTTPException(status_code=400, detail="У вас нет активной персоны")
+
+    followed_persona = db.query(Persona).filter(Persona.id == followed_persona_id).first()
+    if not followed_persona:
+        raise HTTPException(status_code=404, detail="Персона не найдена")
+
+    if follower_user.id == followed_persona.user_id:
+        raise HTTPException(status_code=400, detail="Вы не можете подписаться на самого себя")
+
+    existing = db.query(Follow).filter(
+        Follow.follower_persona_id == follower_user.active_persona_id,
+        Follow.followed_persona_id == followed_persona_id
+    ).first()
+
+    if existing:
+        return existing
+
+    follow = Follow(
+        follower_persona_id=follower_user.active_persona_id,
+        followed_persona_id=followed_persona_id,
+        follower_user_id=follower_user.id,
+        followed_user_id=followed_persona.user_id
+    )
+    db.add(follow)
+    db.commit()
+    db.refresh(follow)
+    return follow
+
+def unfollow_persona(db: Session, follower_user_id: int, followed_persona_id: int):
+    follower_user = db.query(User).filter(User.id == follower_user_id).first()
+    if not follower_user or not follower_user.active_persona_id:
+        return
+
+    db.query(Follow).filter(
+        Follow.follower_persona_id == follower_user.active_persona_id,
+        Follow.followed_persona_id == followed_persona_id
+    ).delete()
+    db.commit()
+
+def get_persona_followers_count(db: Session, persona_id: int) -> int:
+    """Возвращает количество уникальных пользователей, подписанных на эту персону."""
+    return db.query(func.count(func.distinct(Follow.follower_user_id))).filter(
+        Follow.followed_persona_id == persona_id
+    ).scalar() or 0
+
+def is_following(db: Session, follower_user_id: int, followed_persona_id: int) -> bool:
+    """Проверяет, подписан ли пользователь (любой его персоной) на целевую персону."""
+    return db.query(Follow).filter(
+        Follow.follower_user_id == follower_user_id,
+        Follow.followed_persona_id == followed_persona_id
+    ).first() is not None

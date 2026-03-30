@@ -9,7 +9,7 @@ from models import User, Persona, Hobby
 from core.security import get_current_user
 from core.templates import templates
 from services.hobby_service import save_upload_image
-from services import auth_service
+from services import auth_service, interaction_service
 from services.notification_service import send_mock_email
 
 router = APIRouter()
@@ -157,7 +157,12 @@ def public_profile(username: str, request: Request, page: int = 1, db: Session =
     total_pages = max(1, (total + limit - 1) // limit)
     hobbies = db.query(Hobby).filter(Hobby.persona_id == persona.id).options(joinedload(Hobby.author_persona), joinedload(Hobby.tags)).order_by(Hobby.created_at.desc()).offset(offset).limit(limit).all()
 
+    followers_count = interaction_service.get_persona_followers_count(db, persona.id)
+    is_following = False
+    if current_user:
+        is_following = interaction_service.is_following(db, current_user.id, persona.id)
+
     return templates.TemplateResponse(
         "profile.html",
-        {"request": request, "persona": persona, "hobbies": hobbies, "user": current_user, "page": page, "total_pages": total_pages, "total_count": total}
+        {"request": request, "persona": persona, "hobbies": hobbies, "user": current_user, "page": page, "total_pages": total_pages, "total_count": total, "followers_count": followers_count, "is_following": is_following}
     )
