@@ -52,7 +52,7 @@ def delete_file_from_s3(object_name: str):
     try:
         s3_client.delete_object(Bucket=S3_BUCKET, Key=object_name)
     except ClientError as e:
-        logger.error(f"Failed to delete {object_name} from S3: {e}")  # nosec B608
+        logger.error(f"Failed to delete {object_name} from S3: {e}")
         # Don't strictly raise here, as failing to delete an old image shouldn't crash the app usually
 
 def init_s3_bucket():

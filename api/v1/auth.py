@@ -22,4 +22,4 @@ def login_for_access_token(
             headers={"WWW-Authenticate": "Bearer"},
         )
     access_token = create_access_token(data={"sub": user.email})
-    return {"access_token": access_token, "token_type": "bearer"}  # nosec B105
+    return {"access_token": access_token, "token_type": "bearer"}
