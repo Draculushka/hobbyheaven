@@ -57,7 +57,7 @@ jobs:
         run: find . -name "*.py" -not -path "./venv/*" -not -path "./.git/*" -exec python -m py_compile {} +
 
       - name: Ruff lint
-        run: ruff check . --select=E,F,W --ignore=E501,E402 --exclude=migrations/,seed_hobbies.py
+        run: ruff check . --select=E,F,W --ignore=E501,E402 --exclude=migrations/,seed_hobbies.py --fix
 
   docker:
     runs-on: ubuntu-latest

@@ -7,7 +7,7 @@ from typing import Optional
 def create_notification(db: Session, user_id: int, n_type: str, message: str, link: Optional[str] = None):
     """
     Создает системное уведомление для пользователя.
-    
+
     Args:
         db: Сессия базы данных.
         user_id: ID пользователя, который получит уведомление.
@@ -64,7 +64,7 @@ def add_comment(db: Session, hobby_id: int, user_id: int, text: str, persona_id:
     if parent_id:
         pc = db.query(Comment).options(joinedload(Comment.author_persona)).filter(Comment.id == parent_id).first()
         if pc and pc.author_persona.user_id != user_id:
-            create_notification(db, pc.author_persona.user_id, "reply", f"Ответ на ваш комментарий", f"/p/{hobby.id}#comment-{comment.id}")
+            create_notification(db, pc.author_persona.user_id, "reply", "Ответ на ваш комментарий", f"/p/{hobby.id}#comment-{comment.id}")
 
     return comment
 
@@ -94,11 +94,12 @@ def delete_comment(db: Session, comment_id: int, user_id: int):
 
 def toggle_reaction(db: Session, hobby_id: int, user_id: int, emoji_type: str = "heart") -> Optional[Reaction]:
     user = db.query(User).filter(User.id == user_id).with_for_update().first()
-    if not user: raise HTTPException(status_code=404)
-    
+    if not user:
+        raise HTTPException(status_code=404)
+
     if emoji_type != "heart" and user.tokens < 1:
         raise HTTPException(status_code=400, detail="Need tokens")
-    
+
     persona_id = user.active_persona_id
     if not persona_id:
         persona = db.query(Persona).filter(Persona.user_id == user_id, Persona.is_default).first()
@@ -110,7 +111,8 @@ def toggle_reaction(db: Session, hobby_id: int, user_id: int, emoji_type: str = 
         user.active_persona_id = persona_id
 
     hobby = db.query(Hobby).options(joinedload(Hobby.author_persona)).filter(Hobby.id == hobby_id).first()
-    if not hobby: raise HTTPException(status_code=404, detail="Hobby not found")
+    if not hobby:
+        raise HTTPException(status_code=404, detail="Hobby not found")
     if emoji_type == "heart":
         existing = db.query(Reaction).filter(Reaction.hobby_id == hobby_id, Reaction.persona_id == persona_id, Reaction.emoji_type == "heart").first()
         if existing:
@@ -125,7 +127,7 @@ def toggle_reaction(db: Session, hobby_id: int, user_id: int, emoji_type: str = 
         res = Reaction(hobby_id=hobby_id, persona_id=persona_id, emoji_type=emoji_type)
         if hobby.author_persona.user_id != user_id:
             create_notification(db, hobby.author_persona.user_id, "premium_like", f"Ваш post получил {emoji_type}", f"/p/{hobby.id}")
-    
+
     db.add(res)
     db.commit()
     return res
@@ -134,7 +136,8 @@ def toggle_comment_reaction(db: Session, comment_id: int, user_id: int) -> Optio
     user = db.query(User).filter(User.id == user_id).first()
     persona_id = user.active_persona_id
     comment = db.query(Comment).filter(Comment.id == comment_id).first()
-    if not comment: raise HTTPException(status_code=404)
+    if not comment:
+        raise HTTPException(status_code=404)
     existing = db.query(CommentReaction).filter(CommentReaction.comment_id == comment_id, CommentReaction.persona_id == persona_id).first()
     if existing:
         db.delete(existing)
@@ -148,9 +151,11 @@ def toggle_comment_reaction(db: Session, comment_id: int, user_id: int) -> Optio
 def follow_persona(db: Session, follower_user_id: int, followed_persona_id: int) -> Follow:
     user = db.query(User).filter(User.id == follower_user_id).first()
     target = db.query(Persona).filter(Persona.id == followed_persona_id).first()
-    if not target: raise HTTPException(status_code=404)
-    if user.id == target.user_id: raise HTTPException(status_code=400, detail="Вы не можете подписаться на самого себя")
-    
+    if not target:
+        raise HTTPException(status_code=404)
+    if user.id == target.user_id:
+        raise HTTPException(status_code=400, detail="Вы не можете подписаться на самого себя")
+
     follow = Follow(follower_persona_id=user.active_persona_id, followed_persona_id=followed_persona_id, follower_user_id=user.id, followed_user_id=target.user_id)
     db.add(follow)
     db.commit()
