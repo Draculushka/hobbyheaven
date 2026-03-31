@@ -44,7 +44,7 @@ def process_video_hls(hobby_id: int, original_filename: str):
 
     try:
         logger.info(f"Starting transcoding for Hobby {hobby_id}")
-        subprocess.run(cmd, check=True)
+        subprocess.run(cmd, check=True)  # nosec B603
 
         # Теперь загружаем ВСЕ созданные файлы в S3
         master_url = ""

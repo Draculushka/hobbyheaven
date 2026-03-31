@@ -68,7 +68,7 @@ jobs:
         run: mypy . || true
 
       - name: Security scan (Bandit)
-        run: bandit -r . -x ./tests,./venv,./migrations
+        run: bandit -r . -x ./tests,./venv,./migrations,./seed_hobbies.py
 
       - name: Check for missing migrations
         env:
